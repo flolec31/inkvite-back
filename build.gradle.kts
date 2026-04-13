@@ -4,6 +4,8 @@ plugins {
     id("org.springframework.boot") version "4.0.5"
     id("io.spring.dependency-management") version "1.1.7"
     kotlin("plugin.jpa") version "2.2.21"
+    id("org.sonarqube") version "7.2.3.7755"
+    jacoco
 }
 
 group = "com.inkvite"
@@ -69,6 +71,23 @@ allOpen {
     annotation("jakarta.persistence.Embeddable")
 }
 
+sonar {
+    properties {
+        property("sonar.projectKey", "flolec31_inkvite-back")
+        property("sonar.organization", "florianleca")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml")
+    }
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.withType<Test>())
+    reports {
+        xml.required = true
+    }
 }
