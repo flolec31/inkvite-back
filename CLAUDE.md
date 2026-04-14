@@ -8,6 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Build
 ./gradlew build
 
+# After adding, removing, or updating any dependency (including plugins):
+# regenerate dependency verification checksums, otherwise CI will fail
+./gradlew --write-verification-metadata sha256 --refresh-dependencies dependencies buildEnvironment
+
 # Run tests
 ./gradlew test
 
