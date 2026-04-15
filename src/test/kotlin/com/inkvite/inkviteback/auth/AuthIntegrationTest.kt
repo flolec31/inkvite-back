@@ -6,7 +6,7 @@ import com.inkvite.inkviteback.artist.TattooArtistRepository
 import com.inkvite.inkviteback.auth.dto.RegisterRequestDto
 import com.inkvite.inkviteback.auth.entity.VerificationToken
 import com.inkvite.inkviteback.auth.repository.VerificationTokenRepository
-import com.inkvite.inkviteback.email.EmailService
+import com.inkvite.inkviteback.email.service.EmailService
 import org.assertj.core.api.Assertions.assertThat
 import java.time.Instant
 import java.util.UUID

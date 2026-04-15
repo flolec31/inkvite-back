@@ -26,10 +26,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-This is a **Spring Modulith modular monolith** using Kotlin + Spring Boot 4 + Java 24 + Gradle (Kotlin DSL).
+This is a Spring application using Kotlin + Spring Boot 4 + Java 24 + Gradle (Kotlin DSL).
 
 **Key stack choices:**
-- **Spring Modulith** (`spring-modulith-starter-core`, `spring-modulith-starter-jpa`): enforces module boundaries within the monolith. Modules are discovered by package structure under `com.inkvite.inkviteback`. Each sub-package is a module; cross-module access is restricted to public API types only.
 - **Spring Data JPA** with PostgreSQL at runtime.
 - **Spring Security** is on the classpath — all endpoints are secured by default.
 - **RestClient** (not WebClient/RestTemplate) for outbound HTTP calls.

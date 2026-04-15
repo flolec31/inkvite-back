@@ -1,0 +1,7 @@
+[versions]
+resend = "4.13.0"
+springdoc = "3.0.3"
+
+[libraries]
+resend-java = { module = "com.resend:resend-java", version.ref = "resend" }
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }

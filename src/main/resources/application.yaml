@@ -9,3 +9,9 @@ resend:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
