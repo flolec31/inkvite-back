@@ -1,8 +1,9 @@
-package com.inkvite.inkviteback.artist
+package com.inkvite.inkviteback.artist.entity
 
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.time.Instant
 import java.util.UUID
 
 @Entity
@@ -10,6 +11,7 @@ import java.util.UUID
 class TattooArtist(
     @Id var id: UUID,
     var email: String,
-    var passwordHash: String,
-    var active: Boolean = false,
+    var password: String,
+    var registeredAt: Instant,
+    var activatedAt: Instant? = null,
 )

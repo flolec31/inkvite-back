@@ -1,7 +1,7 @@
 package com.inkvite.inkviteback.auth.service.implementation
 
-import com.inkvite.inkviteback.artist.TattooArtistAlreadyExistsException
-import com.inkvite.inkviteback.artist.TattooArtistService
+import com.inkvite.inkviteback.artist.exception.TattooArtistAlreadyExistsException
+import com.inkvite.inkviteback.artist.service.TattooArtistService
 import com.inkvite.inkviteback.auth.entity.VerificationToken
 import com.inkvite.inkviteback.auth.event.VerificationEmailRequested
 import com.inkvite.inkviteback.auth.exception.EmailAlreadyRegisteredException
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.UUID
+import java.util.*
 
 @Service
 @Transactional

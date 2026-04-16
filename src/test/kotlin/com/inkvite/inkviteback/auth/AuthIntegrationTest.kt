@@ -1,8 +1,8 @@
 package com.inkvite.inkviteback.auth
 
 import com.inkvite.inkviteback.TestcontainersConfiguration
-import com.inkvite.inkviteback.artist.TattooArtist
-import com.inkvite.inkviteback.artist.TattooArtistRepository
+import com.inkvite.inkviteback.artist.entity.TattooArtist
+import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
 import com.inkvite.inkviteback.auth.dto.RegisterRequestDto
 import com.inkvite.inkviteback.auth.entity.VerificationToken
 import com.inkvite.inkviteback.auth.repository.VerificationTokenRepository
@@ -53,7 +53,8 @@ class AuthIntegrationTest {
 
         val artist = artistRepository.findAll().single()
         assertThat(artist.email).isEqualTo("artist@test.com")
-        assertThat(artist.active).isFalse()
+        assertThat(artist.registeredAt).isNotNull()
+        assertThat(artist.activatedAt).isNull()
 
         val token = tokenRepository.findAll().single()
         verify(emailService).sendVerificationEmail("artist@test.com", token.token)
@@ -79,14 +80,14 @@ class AuthIntegrationTest {
         mockMvc.perform(get("/auth/verify").param("token", token))
             .andExpect(status().isNoContent)
 
-        assertThat(artistRepository.findAll().single().active).isTrue()
+        assertThat(artistRepository.findAll().single().activatedAt).isNotNull()
         assertThat(tokenRepository.findAll()).isEmpty()
     }
 
     @Test
     fun `verify with expired token returns 400 and deletes token`() {
         val artistId = UUID.randomUUID()
-        artistRepository.save(TattooArtist(id = artistId, email = "artist@test.com", passwordHash = "hash"))
+        artistRepository.save(TattooArtist(id = artistId, email = "artist@test.com", password = "hash", registeredAt = Instant.now()))
         tokenRepository.save(VerificationToken(token = "expired-token", tattooArtistId = artistId, expiresAt = Instant.now().minusSeconds(1)))
 
         mockMvc.perform(get("/auth/verify").param("token", "expired-token"))
