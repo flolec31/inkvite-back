@@ -26,17 +26,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-This is a Spring application using Kotlin + Spring Boot 4 + Java 24 + Gradle (Kotlin DSL).
+This is a Spring Boot application using Kotlin + Spring Boot 4 + Java 24 + Gradle (Kotlin DSL).
 
 **Key stack choices:**
 - **Spring Data JPA** with PostgreSQL at runtime.
-- **Spring Security** is on the classpath — all endpoints are secured by default.
+- **Liquibase** for database migrations — changesets live under `src/main/resources/db/changelog/`, one folder per feature branch (e.g. `1-tattoo-artist-registration-email-validation/`), SQL format.
+- **Spring Security** — all endpoints secured by default; `SecurityConfig` permits `/auth/**`, `/swagger-ui/**`, `/v3/api-docs/**`.
+- **springdoc-openapi** (`springdoc-openapi-starter-webmvc-ui`) for Swagger UI at `/swagger-ui.html`.
+- **Resend** (`resend-java`) for transactional email via `EmailServiceImpl`. API key configured via `application.yaml` (bound with `@ConfigurationProperties` in `ResendConfig`).
 - **RestClient** (not WebClient/RestTemplate) for outbound HTTP calls.
+- **Spring application events** for decoupling: e.g. `AuthServiceImpl` publishes `VerificationEmailRequested`, `EmailEventListener` handles it.
+
+**Package structure** (under `com.inkvite.inkviteback`):
+- `artist` — `TattooArtist` entity, repository, service
+- `auth` — registration/verification controllers, services, token entity, DTOs, events
+- `email` — `EmailService`, Resend client, event listener
+- `security` — `SecurityConfig`, password encoder
 
 **Testing approach:**
 - Tests use Testcontainers for PostgreSQL via `TestcontainersConfiguration` (in `src/test`), imported with `@Import(TestcontainersConfiguration::class)`.
 - `TestInkviteBackApplication` allows running the full app locally with Testcontainers in place of a real database.
-- Docker Compose support (`spring-boot-docker-compose`) is available for dev but `compose.yaml` is currently empty.
+- Integration tests use `@SpringBootTest` + `@AutoConfigureMockMvc`; external services (e.g. `EmailService`) are `@MockitoBean`.
+- Docker Compose (`compose.yaml`) runs a local Postgres 17 for manual dev; not used in tests.
 
 **Kotlin compiler flags:**
 - `-Xjsr305=strict`: null-safety annotations from Java are treated as strict.
@@ -47,3 +58,4 @@ This is a Spring application using Kotlin + Spring Boot 4 + Java 24 + Gradle (Ko
 ## External services
 
 - **SonarCloud**: project `flolec31_inkvite-back`, org `florianleca` — tracks code quality on the main branch and decorates PRs. Requires `SONAR_TOKEN` secret in GitHub.
+- **Resend**: transactional email provider. API key stored in `application-local.yaml` (gitignored). See `ResendConfig` for the `@ConfigurationProperties` binding.
