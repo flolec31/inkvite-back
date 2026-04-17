@@ -5,11 +5,13 @@ import com.resend.Resend
 import com.resend.services.emails.model.CreateEmailOptions
 import com.resend.services.emails.model.Template
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
 @Component
 class ResendEmailClient(
-    private val resend: Resend
+    private val resend: Resend,
+    @Value($$"${app.email.from}") private val from: String,
 ) {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -21,7 +23,7 @@ class ResendEmailClient(
             .build()
 
         val request = CreateEmailOptions.builder()
-            .from("noreply@inkvite.me")
+            .from(from)
             .to(to)
             .template(template)
             .build()

@@ -9,6 +9,8 @@ resend:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
+  email:
+    from: ${APP_EMAIL_FROM:noreply@inkvite.me}
 
 springdoc:
   api-docs:

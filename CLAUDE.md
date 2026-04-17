@@ -53,6 +53,9 @@ This is a Spring Boot application using Kotlin + Spring Boot 4 + Java 24 + Gradl
 - `-Xjsr305=strict`: null-safety annotations from Java are treated as strict.
 - `-Xannotation-default-target=param-property`: annotations on constructor parameters apply to both the parameter and the backing property (important for JPA/Jackson).
 
+**Kotlin conventions:**
+- Use the `$$` string prefix for `@Value` annotations to avoid escaping `$`: `@Value($$"${some.property}")` not `@Value("\${some.property}")`.
+
 **JPA entities** must be in classes annotated with `@Entity`, `@MappedSuperclass`, or `@Embeddable` — the `allOpen` plugin makes these open automatically so JPA proxying works without `open` keywords.
 
 ## External services

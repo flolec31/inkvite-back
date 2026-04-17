@@ -19,6 +19,7 @@ class SecurityConfig {
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
+                // swagger-ui and v3/api-docs are disabled by default (see application.yaml) but pre-permitted for local dev
                 it.requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 it.anyRequest().authenticated()
             }

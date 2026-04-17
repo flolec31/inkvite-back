@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.*
+import java.util.UUID
 
 @Service
 @Transactional
@@ -27,10 +27,9 @@ class AuthServiceImpl(
 ) : AuthService {
 
     override fun register(email: String, password: String) {
-        val artistId = UUID.randomUUID()
         val encodedPassword = passwordEncoder.encode(password)!!
-        try {
-            tattooArtistService.register(artistId, email, encodedPassword)
+        val artistId = try {
+            tattooArtistService.register(email, encodedPassword)
         } catch (_: TattooArtistAlreadyExistsException) {
             throw EmailAlreadyRegisteredException()
         }
@@ -45,7 +44,7 @@ class AuthServiceImpl(
 
     @Transactional(noRollbackFor = [TokenExpiredException::class])
     override fun verify(token: String) {
-        val verificationToken = tokenRepository.findByToken(token) ?: throw TokenNotFoundException()
+        val verificationToken = tokenRepository.findById(token).orElse(null) ?: throw TokenNotFoundException()
         if (verificationToken.expiresAt.isBefore(Instant.now())) {
             tokenRepository.delete(verificationToken)
             throw TokenExpiredException()

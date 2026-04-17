@@ -10,22 +10,20 @@ import java.time.Instant
 import java.util.*
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 class TattooArtistServiceImpl(
     private val repository: TattooArtistRepository
 ) : TattooArtistService {
 
-    override fun register(id: UUID, email: String, encodedPassword: String) {
+    @Transactional
+    override fun register(email: String, encodedPassword: String): UUID {
         if (repository.existsByEmail(email)) throw TattooArtistAlreadyExistsException()
-        val tattooArtist = TattooArtist(
-            id = id,
-            email = email,
-            password = encodedPassword,
-            registeredAt = Instant.now()
-        )
-        repository.save(tattooArtist)
+        val id = UUID.randomUUID()
+        repository.save(TattooArtist(id = id, email = email, password = encodedPassword, registeredAt = Instant.now()))
+        return id
     }
 
+    @Transactional
     override fun activate(artistId: UUID) {
         val artist = repository.findById(artistId)
             .orElseThrow { IllegalStateException("Artist $artistId not found for activation") }

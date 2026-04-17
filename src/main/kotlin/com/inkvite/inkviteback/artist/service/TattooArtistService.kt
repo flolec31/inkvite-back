@@ -3,6 +3,6 @@ package com.inkvite.inkviteback.artist.service
 import java.util.UUID
 
 interface TattooArtistService {
-    fun register(id: UUID, email: String, encodedPassword: String)
+    fun register(email: String, encodedPassword: String): UUID
     fun activate(artistId: UUID)
 }
