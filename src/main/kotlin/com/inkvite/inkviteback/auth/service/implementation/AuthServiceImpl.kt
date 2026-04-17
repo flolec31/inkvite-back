@@ -9,6 +9,7 @@ import com.inkvite.inkviteback.auth.exception.TokenExpiredException
 import com.inkvite.inkviteback.auth.exception.TokenNotFoundException
 import com.inkvite.inkviteback.auth.repository.VerificationTokenRepository
 import com.inkvite.inkviteback.auth.service.AuthService
+import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -23,6 +24,8 @@ class AuthServiceImpl(
     private val tattooArtistService: TattooArtistService,
     private val passwordEncoder: PasswordEncoder,
 ) : AuthService {
+
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun register(email: String, password: String) {
         val encodedPassword = passwordEncoder.encode(password)!!
@@ -41,6 +44,7 @@ class AuthServiceImpl(
         tokenRepository.findByTattooArtistId(artistId)?.let { tokenRepository.delete(it) }
         val verificationToken = VerificationToken(tattooArtistId = artistId)
         tokenRepository.save(verificationToken)
+        logger.debug("Verification token updated for tattoo artist {}", email)
         eventPublisher.publishEvent(VerificationEmailRequested(email, verificationToken.token))
     }
 
