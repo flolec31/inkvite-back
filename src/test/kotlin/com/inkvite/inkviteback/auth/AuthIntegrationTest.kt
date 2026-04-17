@@ -13,6 +13,7 @@ import java.util.UUID
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
@@ -114,5 +115,41 @@ class AuthIntegrationTest {
         val body = objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "short"))
         mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `resend verification replaces existing token and sends new email`() {
+        mockMvc.perform(
+            post("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "password123")))
+        )
+        val firstToken = tokenRepository.findAll().single().token
+
+        mockMvc.perform(post("/auth/resend-verification").param("email", "artist@test.com"))
+            .andExpect(status().isNoContent)
+
+        val newToken = tokenRepository.findAll().single().token
+        assertThat(newToken).isNotEqualTo(firstToken)
+        verify(emailService).sendVerificationEmail("artist@test.com", newToken)
+    }
+
+    @Test
+    fun `resend verification for unknown email returns 204 silently`() {
+        mockMvc.perform(post("/auth/resend-verification").param("email", "unknown@test.com"))
+            .andExpect(status().isNoContent)
+
+        verifyNoInteractions(emailService)
+    }
+
+    @Test
+    fun `resend verification for already activated artist returns 204 silently`() {
+        val artistId = UUID.randomUUID()
+        artistRepository.save(TattooArtist(id = artistId, email = "artist@test.com", password = "hash", registeredAt = Instant.now(), activatedAt = Instant.now()))
+
+        mockMvc.perform(post("/auth/resend-verification").param("email", "artist@test.com"))
+            .andExpect(status().isNoContent)
+
+        verifyNoInteractions(emailService)
     }
 }

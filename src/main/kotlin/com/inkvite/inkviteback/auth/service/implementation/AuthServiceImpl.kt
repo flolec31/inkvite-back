@@ -14,8 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.UUID
 
 @Service
 @Transactional
@@ -33,15 +31,20 @@ class AuthServiceImpl(
         } catch (_: TattooArtistAlreadyExistsException) {
             throw EmailAlreadyRegisteredException()
         }
-        val verificationToken = VerificationToken(
-            token = UUID.randomUUID().toString(),
-            tattooArtistId = artistId,
-            expiresAt = Instant.now().plus(24, ChronoUnit.HOURS),
-        )
+        val verificationToken = VerificationToken(tattooArtistId = artistId)
         tokenRepository.save(verificationToken)
         eventPublisher.publishEvent(VerificationEmailRequested(email, verificationToken.token))
     }
 
+    override fun resendVerification(email: String) {
+        val artistId = tattooArtistService.findUnactivatedByEmail(email) ?: return
+        tokenRepository.findByTattooArtistId(artistId)?.let { tokenRepository.delete(it) }
+        val verificationToken = VerificationToken(tattooArtistId = artistId)
+        tokenRepository.save(verificationToken)
+        eventPublisher.publishEvent(VerificationEmailRequested(email, verificationToken.token))
+    }
+
+    // noRollbackFor: TokenExpiredException must not roll back the transaction so the deletion below persists.
     @Transactional(noRollbackFor = [TokenExpiredException::class])
     override fun verify(token: String) {
         val verificationToken = tokenRepository.findById(token).orElse(null) ?: throw TokenNotFoundException()

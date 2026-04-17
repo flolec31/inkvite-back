@@ -5,4 +5,5 @@ import java.util.UUID
 interface TattooArtistService {
     fun register(email: String, encodedPassword: String): UUID
     fun activate(artistId: UUID)
+    fun findUnactivatedByEmail(email: String): UUID?
 }

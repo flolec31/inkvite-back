@@ -8,4 +8,5 @@ import java.util.UUID
 @Repository
 interface TattooArtistRepository : JpaRepository<TattooArtist, UUID> {
     fun existsByEmail(email: String): Boolean
+    fun findByEmailAndActivatedAtIsNull(email: String): TattooArtist?
 }

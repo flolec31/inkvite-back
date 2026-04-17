@@ -21,4 +21,9 @@ class AuthController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun verify(@RequestParam token: String) =
         authService.verify(token)
+
+    @PostMapping("/resend-verification")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun resendVerification(@RequestParam email: String) =
+        authService.resendVerification(email)
 }

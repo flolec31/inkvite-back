@@ -23,6 +23,9 @@ class TattooArtistServiceImpl(
         return id
     }
 
+    override fun findUnactivatedByEmail(email: String): UUID? =
+        repository.findByEmailAndActivatedAtIsNull(email)?.id
+
     @Transactional
     override fun activate(artistId: UUID) {
         val artist = repository.findById(artistId)
