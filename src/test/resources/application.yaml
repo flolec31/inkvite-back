@@ -5,15 +5,15 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 resend:
-  api-key: ${RESEND_API_KEY:}
+  api-key: dummy
 
 app:
-  base-url: ${APP_BASE_URL:}
+  base-url: http://localhost
   jwt:
-    secret: ${APP_JWT_SECRET}
+    secret: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
     access-token-expiry: 900
   email:
-    from: ${APP_EMAIL_FROM:noreply@inkvite.me}
+    from: noreply@inkvite.me
 
 springdoc:
   api-docs:
