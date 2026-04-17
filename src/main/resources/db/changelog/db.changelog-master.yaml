@@ -1,0 +1,3 @@
+databaseChangeLog:
+  - includeAll:
+      path: db/changelog/1-tattoo-artist-registration-email-validation/

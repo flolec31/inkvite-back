@@ -1,3 +1,19 @@
 spring:
   application:
     name: inkvite-back
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+resend:
+  api-key: ${RESEND_API_KEY:}
+
+app:
+  base-url: ${APP_BASE_URL:}
+  email:
+    from: ${APP_EMAIL_FROM:noreply@inkvite.me}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
