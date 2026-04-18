@@ -32,6 +32,7 @@ This is a Spring Boot application using Kotlin + Spring Boot 4 + Java 24 + Gradl
 - **Spring Data JPA** with PostgreSQL at runtime.
 - **Liquibase** for database migrations — changesets live under `src/main/resources/db/changelog/`, one folder per feature branch (e.g. `1-tattoo-artist-registration-email-validation/`), SQL format.
 - **Spring Security** — all endpoints secured by default; `SecurityConfig` permits `/auth/**`, `/swagger-ui/**`, `/v3/api-docs/**`.
+- **JWT authentication** (`spring-boot-starter-oauth2-resource-server`) — stateless, HMAC-SHA256. Access tokens (15 min) issued as JWTs; refresh tokens (30 days) stored in `refresh_token` table. `JwtConfig` binds `app.jwt.secret` (env: `APP_JWT_SECRET`, min 256-bit base64) and `app.jwt.access-token-expiry`. `JwtServiceImpl` uses `NimbusJwtEncoder` with an explicit `JwsHeader.with(MacAlgorithm.HS256)` — required for Nimbus key selection. `JwtAuthenticationEntryPoint` must be registered on **both** `exceptionHandling` and `oauth2ResourceServer` DSL blocks to cover both missing-token and invalid-token paths.
 - **springdoc-openapi** (`springdoc-openapi-starter-webmvc-ui`) for Swagger UI at `/swagger-ui.html`.
 - **Resend** (`resend-java`) for transactional email via `EmailServiceImpl`. API key configured via `application.yaml` (bound with `@ConfigurationProperties` in `ResendConfig`).
 - **RestClient** (not WebClient/RestTemplate) for outbound HTTP calls.

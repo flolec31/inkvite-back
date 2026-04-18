@@ -1,6 +1,9 @@
 package com.inkvite.inkviteback.auth.controller
 
+import com.inkvite.inkviteback.auth.exception.AccountNotActivatedException
 import com.inkvite.inkviteback.auth.exception.EmailAlreadyRegisteredException
+import com.inkvite.inkviteback.auth.exception.InvalidCredentialsException
+import com.inkvite.inkviteback.auth.exception.InvalidRefreshTokenException
 import com.inkvite.inkviteback.auth.exception.TokenExpiredException
 import com.inkvite.inkviteback.auth.exception.TokenNotFoundException
 import com.inkvite.inkviteback.email.exception.EmailDeliveryException
@@ -30,5 +33,20 @@ class AuthControllerAdvice {
     @ExceptionHandler(EmailDeliveryException::class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     fun handleEmailDelivery(e: EmailDeliveryException) =
+        mapOf("error" to e.message)
+
+    @ExceptionHandler(InvalidCredentialsException::class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    fun handleInvalidCredentials(e: InvalidCredentialsException) =
+        mapOf("error" to e.message)
+
+    @ExceptionHandler(AccountNotActivatedException::class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    fun handleAccountNotActivated(e: AccountNotActivatedException) =
+        mapOf("error" to e.message)
+
+    @ExceptionHandler(InvalidRefreshTokenException::class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    fun handleInvalidRefreshToken(e: InvalidRefreshTokenException) =
         mapOf("error" to e.message)
 }
