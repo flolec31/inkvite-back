@@ -12,6 +12,9 @@ class TattooArtist(
     @Id var id: UUID,
     var email: String,
     var password: String,
+    var artistName: String,
+    var slug: String,
     var registeredAt: Instant,
     var activatedAt: Instant? = null,
+    var profilePhotoKey: String? = null,
 )

@@ -10,4 +10,6 @@ interface TattooArtistRepository : JpaRepository<TattooArtist, UUID> {
     fun existsByEmail(email: String): Boolean
     fun findByEmail(email: String): TattooArtist?
     fun findByEmailAndActivatedAtIsNull(email: String): TattooArtist?
+    fun existsBySlug(slug: String): Boolean
+    fun existsBySlugAndIdNot(slug: String, id: UUID): Boolean
 }

@@ -1,6 +1,6 @@
 package com.inkvite.inkviteback.auth
 
-import com.inkvite.inkviteback.TestcontainersConfiguration
+import com.inkvite.inkviteback.AbstractIntegrationTest
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
 import com.inkvite.inkviteback.auth.dto.LoginRequestDto
@@ -23,9 +23,6 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
@@ -34,10 +31,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import tools.jackson.databind.ObjectMapper
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import(TestcontainersConfiguration::class)
-class AuthIntegrationTest {
+class AuthIntegrationTest : AbstractIntegrationTest() {
 
     @Autowired lateinit var mockMvc: MockMvc
     @Autowired lateinit var objectMapper: ObjectMapper
@@ -61,13 +55,15 @@ class AuthIntegrationTest {
         mockMvc.perform(
             post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "password123")))
+                .content(objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "password123", "John Doe", "john-doe")))
         ).andExpect(status().isNoContent)
 
         val artist = artistRepository.findAll().single()
         assertThat(artist.email).isEqualTo("artist@test.com")
         assertThat(artist.registeredAt).isNotNull()
         assertThat(artist.activatedAt).isNull()
+        assertThat(artist.artistName).isEqualTo("John Doe")
+        assertThat(artist.slug).isEqualTo("john-doe")
 
         val token = tokenRepository.findAll().single()
         verify(emailService).sendVerificationEmail("artist@test.com", token.token)
@@ -75,7 +71,7 @@ class AuthIntegrationTest {
 
     @Test
     fun `register with duplicate email returns 409`() {
-        val body = objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "password123"))
+        val body = objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "password123", "John Doe", "john-doe"))
         mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
         mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isConflict)
@@ -86,7 +82,7 @@ class AuthIntegrationTest {
         mockMvc.perform(
             post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "password123")))
+                .content(objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "password123", "John Doe", "john-doe")))
         )
         val token = tokenRepository.findAll().single().token
 
@@ -100,7 +96,7 @@ class AuthIntegrationTest {
     @Test
     fun `verify with expired token returns 400 and deletes token`() {
         val artistId = UUID.randomUUID()
-        artistRepository.save(TattooArtist(id = artistId, email = "artist@test.com", password = "hash", registeredAt = Instant.now()))
+        artistRepository.save(TattooArtist(id = artistId, email = "artist@test.com", password = "hash", artistName = "Test Artist", slug = "test-artist", registeredAt = Instant.now()))
         tokenRepository.save(VerificationToken(token = "expired-token", tattooArtistId = artistId, expiresAt = Instant.now().minusSeconds(1)))
 
         mockMvc.perform(get("/auth/verify").param("token", "expired-token"))
@@ -117,14 +113,14 @@ class AuthIntegrationTest {
 
     @Test
     fun `register with invalid email returns 400`() {
-        val body = objectMapper.writeValueAsString(RegisterRequestDto("not-an-email", "password123"))
+        val body = objectMapper.writeValueAsString(RegisterRequestDto("not-an-email", "password123", "John Doe", "john-doe"))
         mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isBadRequest)
     }
 
     @Test
     fun `register with too short password returns 400`() {
-        val body = objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "short"))
+        val body = objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "short", "John Doe", "john-doe"))
         mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isBadRequest)
     }
@@ -134,7 +130,7 @@ class AuthIntegrationTest {
         mockMvc.perform(
             post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "password123")))
+                .content(objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "password123", "John Doe", "john-doe")))
         )
         val firstToken = tokenRepository.findAll().single().token
 
@@ -157,7 +153,7 @@ class AuthIntegrationTest {
     @Test
     fun `resend verification for already activated artist returns 204 silently`() {
         val artistId = UUID.randomUUID()
-        artistRepository.save(TattooArtist(id = artistId, email = "artist@test.com", password = "hash", registeredAt = Instant.now(), activatedAt = Instant.now()))
+        artistRepository.save(TattooArtist(id = artistId, email = "artist@test.com", password = "hash", artistName = "Test Artist", slug = "test-artist", registeredAt = Instant.now(), activatedAt = Instant.now()))
 
         mockMvc.perform(post("/auth/resend-verification").param("email", "artist@test.com"))
             .andExpect(status().isNoContent)
@@ -173,6 +169,8 @@ class AuthIntegrationTest {
                 id = artistId,
                 email = "artist@test.com",
                 password = passwordEncoder.encode("password123")!!,
+                artistName = "Test Artist",
+                slug = "test-artist",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )
@@ -198,6 +196,8 @@ class AuthIntegrationTest {
                 id = artistId,
                 email = "artist@test.com",
                 password = passwordEncoder.encode("password123")!!,
+                artistName = "Test Artist",
+                slug = "test-artist",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )
@@ -231,6 +231,8 @@ class AuthIntegrationTest {
                 id = artistId,
                 email = "artist@test.com",
                 password = "hash",
+                artistName = "Test Artist",
+                slug = "test-artist",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )
@@ -262,6 +264,8 @@ class AuthIntegrationTest {
                 id = artistId,
                 email = "artist@test.com",
                 password = "hash",
+                artistName = "Test Artist",
+                slug = "test-artist",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )
@@ -302,6 +306,8 @@ class AuthIntegrationTest {
                 id = artistId,
                 email = "artist@test.com",
                 password = "hash",
+                artistName = "Test Artist",
+                slug = "test-artist",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )
@@ -364,6 +370,8 @@ class AuthIntegrationTest {
                 id = artistId,
                 email = "artist@test.com",
                 password = passwordEncoder.encode("password123")!!,
+                artistName = "Test Artist",
+                slug = "test-artist",
                 registeredAt = Instant.now(),
                 activatedAt = null,
             )
@@ -376,5 +384,24 @@ class AuthIntegrationTest {
         )
             .andExpect(status().isForbidden)
             .andExpect(jsonPath("$.error").value("Account is not activated"))
+    }
+
+    @Test
+    fun `register with duplicate slug returns 409`() {
+        val body1 = objectMapper.writeValueAsString(RegisterRequestDto("artist1@test.com", "password123", "John Doe", "john-doe"))
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body1))
+            .andExpect(status().isNoContent)
+
+        val body2 = objectMapper.writeValueAsString(RegisterRequestDto("artist2@test.com", "password123", "Jane Doe", "john-doe"))
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body2))
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error").value("This slug is already taken"))
+    }
+
+    @Test
+    fun `register with invalid slug format returns 400`() {
+        val body = objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "password123", "John Doe", "INVALID SLUG!"))
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isBadRequest)
     }
 }
