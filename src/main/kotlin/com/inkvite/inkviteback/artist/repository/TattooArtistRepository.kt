@@ -3,6 +3,7 @@ package com.inkvite.inkviteback.artist.repository
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
+import java.util.Optional
 import java.util.UUID
 
 @Repository
@@ -10,6 +11,7 @@ interface TattooArtistRepository : JpaRepository<TattooArtist, UUID> {
     fun existsByEmail(email: String): Boolean
     fun findByEmail(email: String): TattooArtist?
     fun findByEmailAndActivatedAtIsNull(email: String): TattooArtist?
+    fun findBySlug(slug: String): Optional<TattooArtist>
     fun existsBySlug(slug: String): Boolean
     fun existsBySlugAndIdNot(slug: String, id: UUID): Boolean
 }

@@ -46,6 +46,9 @@ class TattooArtistServiceImpl(
 
     override fun findByEmail(email: String): TattooArtist? = repository.findByEmail(email)
 
+    override fun findBySlug(slug: String): TattooArtist =
+        repository.findBySlug(slug).orElseThrow { TattooArtistNotFoundException() }
+
     override fun existsBySlug(slug: String): Boolean = repository.existsBySlug(slug)
 
     override fun existsBySlugAndIdNot(slug: String, artistId: UUID): Boolean =
@@ -72,7 +75,7 @@ class TattooArtistServiceImpl(
         return TattooArtistProfileModel(
             artistName = updatedArtist.artistName,
             slug = updatedArtist.slug,
-            profilePhotoUrl = updatedArtist.profilePhotoKey?.let { "${storageService.baseUrl()}/${updatedArtist.profilePhotoKey}" },
+            profilePhotoUrl = updatedArtist.profilePhotoKey?.let { storageService.getUrl(it) }
         )
     }
 
