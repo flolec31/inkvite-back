@@ -14,6 +14,11 @@ app:
     access-token-expiry: 900
   email:
     from: ${APP_EMAIL_FROM:noreply@inkvite.me}
+  storage:
+    endpoint: ${APP_STORAGE_ENDPOINT:}
+    bucket: ${APP_STORAGE_BUCKET:}
+    access-key: ${APP_STORAGE_ACCESS_KEY:}
+    secret-key: ${APP_STORAGE_SECRET_KEY:}
 
 springdoc:
   api-docs:

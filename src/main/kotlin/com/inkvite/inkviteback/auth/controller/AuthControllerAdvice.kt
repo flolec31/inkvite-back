@@ -1,11 +1,6 @@
 package com.inkvite.inkviteback.auth.controller
 
-import com.inkvite.inkviteback.auth.exception.AccountNotActivatedException
-import com.inkvite.inkviteback.auth.exception.EmailAlreadyRegisteredException
-import com.inkvite.inkviteback.auth.exception.InvalidCredentialsException
-import com.inkvite.inkviteback.auth.exception.InvalidRefreshTokenException
-import com.inkvite.inkviteback.auth.exception.TokenExpiredException
-import com.inkvite.inkviteback.auth.exception.TokenNotFoundException
+import com.inkvite.inkviteback.auth.exception.*
 import com.inkvite.inkviteback.email.exception.EmailDeliveryException
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ExceptionHandler

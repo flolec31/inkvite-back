@@ -36,6 +36,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-liquibase")
     implementation(libs.resend.java)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
+    implementation(platform(libs.aws.sdk.bom))
+    implementation(libs.aws.sdk.s3)
+    implementation(libs.aws.sdk.url.connection.client)
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")
@@ -48,6 +51,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("org.testcontainers:testcontainers-postgresql")
+    testImplementation("org.testcontainers:testcontainers-minio")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

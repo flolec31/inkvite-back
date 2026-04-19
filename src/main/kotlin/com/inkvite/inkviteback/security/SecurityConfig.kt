@@ -33,7 +33,8 @@ class SecurityConfig(
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
-                it.requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                it.requestMatchers("/auth/**", "/artists/slug-available", "/swagger-ui/**", "/v3/api-docs/**")
+                    .permitAll()
                 it.anyRequest().authenticated()
             }
             .oauth2ResourceServer {

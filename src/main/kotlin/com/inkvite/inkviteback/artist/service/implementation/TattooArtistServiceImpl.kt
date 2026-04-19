@@ -2,27 +2,41 @@ package com.inkvite.inkviteback.artist.service.implementation
 
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.artist.exception.TattooArtistAlreadyExistsException
+import com.inkvite.inkviteback.artist.exception.TattooArtistNotFoundException
+import com.inkvite.inkviteback.artist.model.TattooArtistProfileModel
 import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
 import com.inkvite.inkviteback.artist.service.TattooArtistService
+import com.inkvite.inkviteback.storage.service.StorageService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 @Service
 @Transactional(readOnly = true)
 class TattooArtistServiceImpl(
-    private val repository: TattooArtistRepository
+    private val repository: TattooArtistRepository,
+    private val storageService: StorageService
 ) : TattooArtistService {
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @Transactional
-    override fun register(email: String, encodedPassword: String): UUID {
+    override fun register(email: String, encodedPassword: String, artistName: String, slug: String): UUID {
         if (repository.existsByEmail(email)) throw TattooArtistAlreadyExistsException()
         val id = UUID.randomUUID()
-        repository.save(TattooArtist(id = id, email = email, password = encodedPassword, registeredAt = Instant.now()))
+        repository.save(
+            TattooArtist(
+                id = id,
+                email = email,
+                password = encodedPassword,
+                artistName = artistName,
+                slug = slug,
+                registeredAt = Instant.now(),
+            )
+        )
         logger.info("New tattoo artist registration: {}", email)
         return id
     }
@@ -32,6 +46,14 @@ class TattooArtistServiceImpl(
 
     override fun findByEmail(email: String): TattooArtist? = repository.findByEmail(email)
 
+    override fun existsBySlug(slug: String): Boolean = repository.existsBySlug(slug)
+
+    override fun existsBySlugAndIdNot(slug: String, artistId: UUID): Boolean =
+        repository.existsBySlugAndIdNot(slug, artistId)
+
+    override fun findById(artistId: UUID): TattooArtist =
+        repository.findById(artistId).orElseThrow { TattooArtistNotFoundException() }
+
     @Transactional
     override fun activate(artistId: UUID) {
         val artist = repository.findById(artistId)
@@ -39,5 +61,27 @@ class TattooArtistServiceImpl(
         artist.activatedAt = Instant.now()
         repository.save(artist)
         logger.info("Activated tattoo artist: {}", artist.email)
+    }
+
+    @Transactional
+    override fun updateProfile(artistId: UUID, artistName: String?, slug: String?): TattooArtistProfileModel {
+        val artist = findById(artistId)
+        artistName?.let { artist.artistName = it }
+        slug?.let { artist.slug = it }
+        val updatedArtist = repository.save(artist)
+        return TattooArtistProfileModel(
+            artistName = updatedArtist.artistName,
+            slug = updatedArtist.slug,
+            profilePhotoUrl = updatedArtist.profilePhotoKey?.let { "${storageService.baseUrl()}/${updatedArtist.profilePhotoKey}" },
+        )
+    }
+
+    @Transactional
+    override fun updatePhoto(artistId: UUID, photo: MultipartFile): String {
+        val artist = findById(artistId)
+        val photoKey = "artists/$artistId/profile-photo"
+        artist.profilePhotoKey = photoKey
+        repository.save(artist)
+        return storageService.upload(photoKey, photo.bytes, photo.contentType!!)
     }
 }
