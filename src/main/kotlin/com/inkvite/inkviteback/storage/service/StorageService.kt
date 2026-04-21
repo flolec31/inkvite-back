@@ -7,5 +7,5 @@ interface StorageService {
      */
     fun upload(key: String, bytes: ByteArray, contentType: String): String
 
-    fun baseUrl(): String
+    fun getUrl(key: String): String
 }

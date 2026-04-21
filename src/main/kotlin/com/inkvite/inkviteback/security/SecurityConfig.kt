@@ -33,8 +33,12 @@ class SecurityConfig(
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
-                it.requestMatchers("/auth/**", "/artists/slug-available", "/swagger-ui/**", "/v3/api-docs/**")
-                    .permitAll()
+                it.requestMatchers("/auth/**").permitAll()
+                it.requestMatchers("/artists/slug-available").permitAll()
+                it.requestMatchers("/swagger-ui/**").permitAll()
+                it.requestMatchers("/v3/api-docs/**").permitAll()
+                it.requestMatchers("/appointment/{slug}").permitAll()
+                it.requestMatchers("/appointment/verify").permitAll()
                 it.anyRequest().authenticated()
             }
             .oauth2ResourceServer {

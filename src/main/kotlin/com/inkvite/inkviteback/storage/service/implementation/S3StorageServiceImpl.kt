@@ -41,5 +41,7 @@ class S3StorageServiceImpl(
         return "${config.endpoint}/${config.bucket}/$key"
     }
 
-    override fun baseUrl(): String = "${config.endpoint}/${config.bucket}"
+    override fun getUrl(key: String): String =
+        "${config.endpoint}/${config.bucket}/$key"
+
 }

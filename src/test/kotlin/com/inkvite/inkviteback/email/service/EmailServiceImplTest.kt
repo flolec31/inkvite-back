@@ -2,6 +2,7 @@ package com.inkvite.inkviteback.email.service
 
 import com.inkvite.inkviteback.email.client.ResendEmailClient
 import com.inkvite.inkviteback.email.service.implementation.EmailServiceImpl
+import java.util.UUID
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -23,13 +24,25 @@ class EmailServiceImplTest {
     }
 
     @Test
-    fun `sendVerificationEmail builds verification link and delegates to client`() {
-        emailService.sendVerificationEmail("user@example.com", "abc123")
+    fun `sendArtistVerificationEmail builds verification link and delegates to client`() {
+        emailService.sendArtistVerificationEmail("user@example.com", "abc123")
 
         verify(resendEmailClient).sendEmail(
             "user@example.com",
-            "verify-email",
+            "verify-artist-email",
             mapOf("link" to "http://localhost:8080/auth/verify?token=abc123")
+        )
+    }
+
+    @Test
+    fun `sendAppointmentVerificationEmail builds verification link and delegates to client`() {
+        val formId = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        emailService.sendAppointmentVerificationEmail("client@example.com", formId)
+
+        verify(resendEmailClient).sendEmail(
+            "client@example.com",
+            "verify-appointment-email",
+            mapOf("link" to "http://localhost:8080/appointment/verify?formId=$formId")
         )
     }
 }

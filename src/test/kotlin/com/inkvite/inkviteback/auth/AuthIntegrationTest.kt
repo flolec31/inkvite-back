@@ -66,7 +66,7 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
         assertThat(artist.slug).isEqualTo("john-doe")
 
         val token = tokenRepository.findAll().single()
-        verify(emailService).sendVerificationEmail("artist@test.com", token.token)
+        verify(emailService).sendArtistVerificationEmail("artist@test.com", token.token)
     }
 
     @Test
@@ -139,7 +139,7 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
 
         val newToken = tokenRepository.findAll().single().token
         assertThat(newToken).isNotEqualTo(firstToken)
-        verify(emailService).sendVerificationEmail("artist@test.com", newToken)
+        verify(emailService).sendArtistVerificationEmail("artist@test.com", newToken)
     }
 
     @Test

@@ -10,6 +10,7 @@ interface TattooArtistService {
     fun activate(artistId: UUID)
     fun findUnactivatedByEmail(email: String): UUID?
     fun findByEmail(email: String): TattooArtist?
+    fun findBySlug(slug: String): TattooArtist
     fun existsBySlug(slug: String): Boolean
     fun existsBySlugAndIdNot(slug: String, artistId: UUID): Boolean
     fun findById(artistId: UUID): TattooArtist

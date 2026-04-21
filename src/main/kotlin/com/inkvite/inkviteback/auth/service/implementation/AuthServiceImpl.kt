@@ -6,7 +6,7 @@ import com.inkvite.inkviteback.artist.service.TattooArtistService
 import com.inkvite.inkviteback.auth.dto.LoginResponseDto
 import com.inkvite.inkviteback.auth.entity.RefreshToken
 import com.inkvite.inkviteback.auth.entity.VerificationToken
-import com.inkvite.inkviteback.auth.event.VerificationEmailRequested
+import com.inkvite.inkviteback.auth.event.ArtistVerificationEmailRequested
 import com.inkvite.inkviteback.auth.exception.AccountNotActivatedException
 import com.inkvite.inkviteback.auth.exception.EmailAlreadyRegisteredException
 import com.inkvite.inkviteback.auth.exception.InvalidCredentialsException
@@ -48,7 +48,7 @@ class AuthServiceImpl(
         }
         val verificationToken = VerificationToken(tattooArtistId = artistId)
         tokenRepository.save(verificationToken)
-        eventPublisher.publishEvent(VerificationEmailRequested(email, verificationToken.token))
+        eventPublisher.publishEvent(ArtistVerificationEmailRequested(email, verificationToken.token))
     }
 
     override fun resendVerification(email: String) {
@@ -57,7 +57,7 @@ class AuthServiceImpl(
         val verificationToken = VerificationToken(tattooArtistId = artistId)
         tokenRepository.save(verificationToken)
         logger.debug("Verification token updated for tattoo artist {}", email)
-        eventPublisher.publishEvent(VerificationEmailRequested(email, verificationToken.token))
+        eventPublisher.publishEvent(ArtistVerificationEmailRequested(email, verificationToken.token))
     }
 
     // noRollbackFor: TokenExpiredException must not roll back the transaction so the deletion below persists.

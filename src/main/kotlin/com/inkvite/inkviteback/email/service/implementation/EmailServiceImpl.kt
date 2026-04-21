@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.util.UriComponentsBuilder
+import java.util.UUID
 
 @Service
 class EmailServiceImpl(
@@ -15,14 +16,24 @@ class EmailServiceImpl(
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override fun sendVerificationEmail(to: String, token: String) {
+    override fun sendArtistVerificationEmail(to: String, token: String) {
         val link = UriComponentsBuilder.fromUriString(baseUrl)
             .path("/auth/verify")
             .queryParam("token", token)
             .toUriString()
         val variables = mapOf("link" to link)
-        logger.debug("Sending verification email to: $to")
-        resendEmailClient.sendEmail(to, "verify-email", variables)
+        logger.debug("Sending artist verification email to: $to")
+        resendEmailClient.sendEmail(to, "verify-artist-email", variables)
+    }
+
+    override fun sendAppointmentVerificationEmail(to: String, formId: UUID) {
+        val link = UriComponentsBuilder.fromUriString(baseUrl)
+            .path("/appointment/verify")
+            .queryParam("formId", formId)
+            .toUriString()
+        val variables = mapOf("link" to link)
+        logger.debug("Sending appointment verification email to: $to")
+        resendEmailClient.sendEmail(to, "verify-appointment-email", variables)
     }
 
 }
