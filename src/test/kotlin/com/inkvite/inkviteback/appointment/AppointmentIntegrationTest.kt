@@ -16,7 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -189,6 +191,81 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
             post("/appointment/test-artist")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validFormBody(coverUp = true)))
+        ).andExpect(status().isBadRequest)
+    }
+
+    // --- POST /appointment/{slug}/reference ---
+
+    @Test
+    fun `upload reference with jpeg returns 201 with key and signed url`() {
+        val artist = createActivatedArtist()
+
+        mockMvc.perform(
+            multipart("/appointment/${artist.slug}/reference")
+                .file(MockMultipartFile("photo", "ref.jpg", "image/jpeg", ByteArray(100)))
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.key").value(org.hamcrest.Matchers.matchesPattern("references/${artist.id}/[0-9a-f\\-]{36}")))
+            .andExpect(jsonPath("$.url").value(org.hamcrest.Matchers.containsString("X-Amz-Signature")))
+    }
+
+    @Test
+    fun `upload reference with png returns 201`() {
+        val artist = createActivatedArtist()
+
+        mockMvc.perform(
+            multipart("/appointment/${artist.slug}/reference")
+                .file(MockMultipartFile("photo", "ref.png", "image/png", ByteArray(100)))
+        ).andExpect(status().isCreated)
+    }
+
+    @Test
+    fun `upload reference with webp returns 201`() {
+        val artist = createActivatedArtist()
+
+        mockMvc.perform(
+            multipart("/appointment/${artist.slug}/reference")
+                .file(MockMultipartFile("photo", "ref.webp", "image/webp", ByteArray(100)))
+        ).andExpect(status().isCreated)
+    }
+
+    @Test
+    fun `upload reference with invalid content type returns 400`() {
+        val artist = createActivatedArtist()
+
+        mockMvc.perform(
+            multipart("/appointment/${artist.slug}/reference")
+                .file(MockMultipartFile("photo", "file.pdf", "application/pdf", ByteArray(100)))
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error").value("Reference photo must be a JPEG, PNG, or WebP image"))
+    }
+
+    @Test
+    fun `upload reference exceeding 5mb returns 400`() {
+        val artist = createActivatedArtist()
+
+        mockMvc.perform(
+            multipart("/appointment/${artist.slug}/reference")
+                .file(MockMultipartFile("photo", "big.jpg", "image/jpeg", ByteArray(5 * 1024 * 1024 + 1)))
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error").value("Reference photo must not exceed 5 MB"))
+    }
+
+    @Test
+    fun `upload reference for unknown slug returns 404`() {
+        mockMvc.perform(
+            multipart("/appointment/unknown-slug/reference")
+                .file(MockMultipartFile("photo", "ref.jpg", "image/jpeg", ByteArray(100)))
+        ).andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `upload reference with invalid slug format returns 400`() {
+        mockMvc.perform(
+            multipart("/appointment/INVALID/reference")
+                .file(MockMultipartFile("photo", "ref.jpg", "image/jpeg", ByteArray(100)))
         ).andExpect(status().isBadRequest)
     }
 

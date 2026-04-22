@@ -5,6 +5,7 @@ import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
+import jakarta.validation.Valid
 
 data class AppointmentFormRequestDto(
     @field:NotBlank @field:Email val email: String,
@@ -15,7 +16,7 @@ data class AppointmentFormRequestDto(
     @field:NotBlank val size: String,
     val firstTattoo: Boolean,
     val coverUp: Boolean,
-    val references: List<ReferenceRequestDto> = emptyList()
+    @field:Valid @field:Size(max = 10) val references: List<ReferenceRequestDto> = emptyList()
 ) {
 
     @Suppress("unused")

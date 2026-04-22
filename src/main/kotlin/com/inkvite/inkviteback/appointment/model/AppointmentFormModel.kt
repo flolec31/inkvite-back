@@ -10,5 +10,5 @@ data class AppointmentFormModel(
     val tattooSize: String,
     val firstTattoo: Boolean,
     val coverUp: Boolean,
-    val references: List<ReferenceModel>
+    val references: List<CommentedReferenceModel>
 )

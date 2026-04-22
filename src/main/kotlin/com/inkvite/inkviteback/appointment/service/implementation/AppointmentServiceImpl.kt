@@ -3,15 +3,21 @@ package com.inkvite.inkviteback.appointment.service.implementation
 import com.inkvite.inkviteback.appointment.entity.AppointmentForm
 import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailRequested
 import com.inkvite.inkviteback.appointment.exception.AppointmentFormNotFoundException
+import com.inkvite.inkviteback.appointment.exception.InvalidReferenceContentTypeException
+import com.inkvite.inkviteback.appointment.exception.ReferenceUploadFailedException
+import com.inkvite.inkviteback.appointment.exception.ReferenceTooLargeException
 import com.inkvite.inkviteback.appointment.model.AppointmentFormModel
+import com.inkvite.inkviteback.appointment.model.UploadedReferenceModel
 import com.inkvite.inkviteback.appointment.repository.AppointmentFormRepository
 import com.inkvite.inkviteback.appointment.repository.ReferenceRepository
 import com.inkvite.inkviteback.appointment.service.AppointmentService
 import com.inkvite.inkviteback.artist.service.TattooArtistService
 import com.inkvite.inkviteback.client.service.TattooClientService
+import com.inkvite.inkviteback.storage.service.StorageService
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 import java.time.Instant
 import java.util.UUID
 
@@ -21,6 +27,7 @@ class AppointmentServiceImpl(
     private val eventPublisher: ApplicationEventPublisher,
     private val tattooArtistService: TattooArtistService,
     private val tattooClientService: TattooClientService,
+    private val storageService: StorageService,
     private val appointmentFormRepository: AppointmentFormRepository,
     private val referenceRepository: ReferenceRepository
 ) : AppointmentService {
@@ -36,6 +43,24 @@ class AppointmentServiceImpl(
         val form = appointmentFormRepository.save(AppointmentForm(appointmentFormModel, artist, client))
         referenceRepository.saveAll(appointmentFormModel.references.map { it.toEntity(form) })
         eventPublisher.publishEvent(AppointmentVerificationEmailRequested(appointmentFormModel.clientEmail, form.id))
+    }
+
+    override fun uploadReference(
+        slug: String,
+        photo: MultipartFile
+    ): UploadedReferenceModel {
+        val allowedTypes = setOf("image/jpeg", "image/png", "image/webp")
+        if (photo.contentType !in allowedTypes) throw InvalidReferenceContentTypeException()
+        if (photo.size > 5 * 1024 * 1024) throw ReferenceTooLargeException()
+
+        val artist = tattooArtistService.findBySlug(slug)
+        val photoKey = "references/${artist.id}/${UUID.randomUUID()}"
+        val url = try {
+            storageService.upload(photoKey, photo.bytes, photo.contentType!!)
+        } catch (e: Exception) {
+            throw ReferenceUploadFailedException(e)
+        }
+        return UploadedReferenceModel(key = photoKey, url = url)
     }
 
     @Transactional

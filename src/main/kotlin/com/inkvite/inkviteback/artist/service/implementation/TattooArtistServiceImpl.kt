@@ -75,7 +75,7 @@ class TattooArtistServiceImpl(
         return TattooArtistProfileModel(
             artistName = updatedArtist.artistName,
             slug = updatedArtist.slug,
-            profilePhotoUrl = updatedArtist.profilePhotoKey?.let { storageService.getUrl(it) }
+            profilePhotoUrl = updatedArtist.profilePhotoKey?.let { storageService.getSignedUrl(it) }
         )
     }
 
