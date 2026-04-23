@@ -38,6 +38,7 @@ class SecurityConfig(
                 it.requestMatchers("/swagger-ui/**").permitAll()
                 it.requestMatchers("/v3/api-docs/**").permitAll()
                 it.requestMatchers("/appointment/{slug}").permitAll()
+                it.requestMatchers("/appointment/{slug}/reference").permitAll()
                 it.requestMatchers("/appointment/verify").permitAll()
                 it.anyRequest().authenticated()
             }

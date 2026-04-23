@@ -2,6 +2,7 @@
 resend = "4.13.0"
 springdoc = "3.0.3"
 aws-sdk = "2.30.16"
+mockito-kotlin = "5.4.0"
 
 [libraries]
 resend-java = { module = "com.resend:resend-java", version.ref = "resend" }
@@ -9,3 +10,4 @@ springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openap
 aws-sdk-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws-sdk" }
 aws-sdk-s3 = { module = "software.amazon.awssdk:s3" }
 aws-sdk-url-connection-client = { module = "software.amazon.awssdk:url-connection-client" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }

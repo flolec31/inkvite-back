@@ -1,21 +1,20 @@
 package com.inkvite.inkviteback.artist.controller
 
 import com.inkvite.inkviteback.artist.dto.PhotoUploadResponseDto
+import com.inkvite.inkviteback.artist.dto.ProfileResponseDto
 import com.inkvite.inkviteback.artist.dto.SlugAvailabilityResponseDto
+import com.inkvite.inkviteback.artist.dto.UpdateProfileRequestDto
 import com.inkvite.inkviteback.artist.exception.InvalidPhotoContentTypeException
+import com.inkvite.inkviteback.artist.exception.SlugAlreadyTakenException
 import com.inkvite.inkviteback.artist.service.TattooArtistService
+import jakarta.validation.Valid
 import jakarta.validation.constraints.Pattern
+import org.springframework.http.MediaType
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.util.*
-import com.inkvite.inkviteback.artist.dto.ProfileResponseDto
-import com.inkvite.inkviteback.artist.dto.UpdateProfileRequestDto
-import com.inkvite.inkviteback.artist.exception.SlugAlreadyTakenException
-import jakarta.validation.Valid
-import org.springframework.web.bind.annotation.PatchMapping
-import org.springframework.web.bind.annotation.RequestBody
 
 @RestController
 @RequestMapping("/artists")
@@ -43,7 +42,7 @@ class TattooArtistController(
         return ProfileResponseDto(updatedProfile)
     }
 
-    @PostMapping("/me/photo")
+    @PostMapping("/me/photo", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadPhoto(
         @RequestParam("photo") photo: MultipartFile,
         authentication: JwtAuthenticationToken,
