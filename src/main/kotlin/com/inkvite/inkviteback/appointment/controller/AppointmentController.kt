@@ -1,12 +1,18 @@
 package com.inkvite.inkviteback.appointment.controller
 
 import com.inkvite.inkviteback.appointment.dto.AppointmentFormRequestDto
+import com.inkvite.inkviteback.appointment.dto.AppointmentItemResponseDto
 import com.inkvite.inkviteback.appointment.dto.ReferenceResponseDto
 import com.inkvite.inkviteback.appointment.service.AppointmentService
+import com.inkvite.inkviteback.common.dto.PagedResponseDto
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Pattern
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
@@ -37,5 +43,20 @@ class AppointmentController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun verify(@RequestParam formId: UUID) =
         appointmentService.verify(formId)
+
+    @GetMapping("/")
+    fun getAppointmentsList(
+        authentication: JwtAuthenticationToken,
+        @PageableDefault(size = 20, sort = ["verifiedAt"], direction = Sort.Direction.DESC) pageable: Pageable
+    ): PagedResponseDto<AppointmentItemResponseDto> {
+        val artistId = UUID.fromString(authentication.token.subject)
+        val appointments = appointmentService.getAppointmentsOf(artistId, pageable)
+        return PagedResponseDto(
+            content = appointments.content.map { it.toDto() },
+            total = appointments.totalElements,
+            page = appointments.number,
+            pageCount = appointments.totalPages
+        )
+    }
 
 }

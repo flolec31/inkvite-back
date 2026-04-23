@@ -1,11 +1,14 @@
 package com.inkvite.inkviteback.appointment
 
 import com.inkvite.inkviteback.AbstractIntegrationTest
-import com.inkvite.inkviteback.appointment.repository.AppointmentFormRepository
+import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.appointment.repository.AppointmentRepository
 import com.inkvite.inkviteback.appointment.repository.ReferenceRepository
-import com.inkvite.inkviteback.client.repository.TattooClientRepository
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
+import com.inkvite.inkviteback.auth.service.JwtService
+import com.inkvite.inkviteback.client.entity.TattooClient
+import com.inkvite.inkviteback.client.repository.TattooClientRepository
 import com.inkvite.inkviteback.email.service.EmailService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -14,9 +17,9 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -24,6 +27,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import tools.jackson.databind.ObjectMapper
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class AppointmentIntegrationTest : AbstractIntegrationTest() {
@@ -31,9 +35,10 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
     @Autowired lateinit var mockMvc: MockMvc
     @Autowired lateinit var objectMapper: ObjectMapper
     @Autowired lateinit var artistRepository: TattooArtistRepository
-    @Autowired lateinit var appointmentFormRepository: AppointmentFormRepository
+    @Autowired lateinit var appointmentRepository: AppointmentRepository
     @Autowired lateinit var tattooClientRepository: TattooClientRepository
     @Autowired lateinit var referenceRepository: ReferenceRepository
+    @Autowired lateinit var jwtService: JwtService
 
     @MockitoBean lateinit var emailService: EmailService
 
@@ -41,7 +46,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
     @AfterEach
     fun cleanup() {
         referenceRepository.deleteAll()
-        appointmentFormRepository.deleteAll()
+        appointmentRepository.deleteAll()
         tattooClientRepository.deleteAll()
         artistRepository.deleteAll()
     }
@@ -84,7 +89,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
                 .content(objectMapper.writeValueAsString(validFormBody()))
         ).andExpect(status().isCreated)
 
-        val form = appointmentFormRepository.findAll().single()
+        val form = appointmentRepository.findAll().single()
         assertThat(form.artist.id).isEqualTo(artist.id)
         assertThat(form.tattooDescription).isEqualTo("A beautiful dragon tattoo on my forearm")
         assertThat(form.tattooPlacement).isEqualTo("forearm")
@@ -140,7 +145,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
         ).andExpect(status().isCreated)
 
         assertThat(tattooClientRepository.findAll()).hasSize(1)
-        assertThat(appointmentFormRepository.findAll()).hasSize(2)
+        assertThat(appointmentRepository.findAll()).hasSize(2)
     }
 
     @Test
@@ -279,13 +284,13 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validFormBody()))
         )
-        val form = appointmentFormRepository.findAll().single()
+        val form = appointmentRepository.findAll().single()
         assertThat(form.verifiedAt).isNull()
 
         mockMvc.perform(get("/appointment/verify").param("formId", form.id.toString()))
             .andExpect(status().isNoContent)
 
-        assertThat(appointmentFormRepository.findById(form.id).get().verifiedAt).isNotNull()
+        assertThat(appointmentRepository.findById(form.id).get().verifiedAt).isNotNull()
     }
 
     @Test
@@ -293,5 +298,115 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
         mockMvc.perform(get("/appointment/verify").param("formId", UUID.randomUUID().toString()))
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.error").value("Appointment form not found"))
+    }
+
+    // --- GET /appointment/ ---
+
+    private fun saveVerifiedAppointment(
+        artist: TattooArtist,
+        verifiedAt: Instant = Instant.now(),
+        clientEmail: String = "client-${UUID.randomUUID()}@test.com"
+    ): Appointment {
+        val client = tattooClientRepository.save(TattooClient(email = clientEmail, firstName = "Jane", lastName = "Doe"))
+        return appointmentRepository.save(
+            Appointment(
+                artist = artist,
+                client = client,
+                tattooDescription = "A beautiful dragon tattoo on my forearm",
+                tattooPlacement = "forearm",
+                tattooSize = "10x10cm",
+                firstTattoo = false,
+                coverUp = false,
+                verifiedAt = verifiedAt
+            )
+        )
+    }
+
+    @Test
+    fun `get appointments list returns 401 when not authenticated`() {
+        mockMvc.perform(get("/appointment/"))
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `get appointments list returns empty page when artist has no verified appointments`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+
+        mockMvc.perform(get("/appointment/").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content").isEmpty)
+            .andExpect(jsonPath("$.total").value(0))
+            .andExpect(jsonPath("$.pageCount").value(0))
+    }
+
+    @Test
+    fun `get appointments list does not return unverified appointments`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+        val client = tattooClientRepository.save(TattooClient(email = "client@test.com", firstName = "Jane", lastName = "Doe"))
+        appointmentRepository.save(Appointment(artist = artist, client = client, tattooDescription = "desc", tattooPlacement = "arm", tattooSize = "10x10cm", firstTattoo = false, coverUp = false))
+
+        mockMvc.perform(get("/appointment/").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content").isEmpty)
+            .andExpect(jsonPath("$.total").value(0))
+    }
+
+    @Test
+    fun `get appointments list returns correct fields for a verified appointment`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+        val appointment = saveVerifiedAppointment(artist)
+
+        mockMvc.perform(get("/appointment/").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content[0].id").value(appointment.id.toString()))
+            .andExpect(jsonPath("$.content[0].firstName").value("Jane"))
+            .andExpect(jsonPath("$.content[0].lastName").value("Doe"))
+            .andExpect(jsonPath("$.content[0].tattooPlacement").value("forearm"))
+            .andExpect(jsonPath("$.content[0].description").value("A beautiful dragon tattoo on my forearm"))
+            .andExpect(jsonPath("$.content[0].receivedAt").isString)
+            .andExpect(jsonPath("$.content[0].new").value(true))
+    }
+
+    @Test
+    fun `get appointments list returns correct pagination metadata`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+        repeat(3) { saveVerifiedAppointment(artist) }
+
+        mockMvc.perform(get("/appointment/").param("size", "2").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content.length()").value(2))
+            .andExpect(jsonPath("$.total").value(3))
+            .andExpect(jsonPath("$.page").value(0))
+            .andExpect(jsonPath("$.pageCount").value(2))
+    }
+
+    @Test
+    fun `get appointments list does not return other artists appointments`() {
+        val artist = createActivatedArtist(slug = "my-artist")
+        val other = createActivatedArtist(slug = "other-artist")
+        val token = jwtService.generateAccessToken(artist.id)
+        saveVerifiedAppointment(other)
+
+        mockMvc.perform(get("/appointment/").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content").isEmpty)
+            .andExpect(jsonPath("$.total").value(0))
+    }
+
+    @Test
+    fun `get appointments list is sorted by verifiedAt descending`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+        val older = saveVerifiedAppointment(artist, verifiedAt = Instant.now().minus(1, ChronoUnit.HOURS))
+        val newer = saveVerifiedAppointment(artist, verifiedAt = Instant.now())
+
+        mockMvc.perform(get("/appointment/").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content[0].id").value(newer.id.toString()))
+            .andExpect(jsonPath("$.content[1].id").value(older.id.toString()))
     }
 }

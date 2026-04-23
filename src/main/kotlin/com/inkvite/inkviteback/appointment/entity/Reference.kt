@@ -11,8 +11,8 @@ import java.util.UUID
 @Table(name = "reference")
 class Reference(
     @Id var id: UUID = UUID.randomUUID(),
-    @ManyToOne @JoinColumn(name = "appointment_form_id", nullable = false)
-    var appointmentForm: AppointmentForm,
+    @ManyToOne @JoinColumn(name = "appointment_id", nullable = false)
+    var appointment: Appointment,
     var key: String,
     var comment: String? = null,
 )
