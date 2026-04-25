@@ -1,20 +1,23 @@
 package com.inkvite.inkviteback.appointment.service.implementation
 
-import com.inkvite.inkviteback.appointment.entity.AppointmentForm
+import com.inkvite.inkviteback.appointment.entity.Appointment
 import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailRequested
 import com.inkvite.inkviteback.appointment.exception.AppointmentFormNotFoundException
 import com.inkvite.inkviteback.appointment.exception.InvalidReferenceContentTypeException
 import com.inkvite.inkviteback.appointment.exception.ReferenceUploadFailedException
 import com.inkvite.inkviteback.appointment.exception.ReferenceTooLargeException
 import com.inkvite.inkviteback.appointment.model.AppointmentFormModel
+import com.inkvite.inkviteback.appointment.model.AppointmentItemModel
 import com.inkvite.inkviteback.appointment.model.UploadedReferenceModel
-import com.inkvite.inkviteback.appointment.repository.AppointmentFormRepository
+import com.inkvite.inkviteback.appointment.repository.AppointmentRepository
 import com.inkvite.inkviteback.appointment.repository.ReferenceRepository
 import com.inkvite.inkviteback.appointment.service.AppointmentService
 import com.inkvite.inkviteback.artist.service.TattooArtistService
 import com.inkvite.inkviteback.client.service.TattooClientService
 import com.inkvite.inkviteback.storage.service.StorageService
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -28,7 +31,7 @@ class AppointmentServiceImpl(
     private val tattooArtistService: TattooArtistService,
     private val tattooClientService: TattooClientService,
     private val storageService: StorageService,
-    private val appointmentFormRepository: AppointmentFormRepository,
+    private val appointmentRepository: AppointmentRepository,
     private val referenceRepository: ReferenceRepository
 ) : AppointmentService {
 
@@ -40,7 +43,7 @@ class AppointmentServiceImpl(
             appointmentFormModel.clientFirstName,
             appointmentFormModel.clientLastName
         )
-        val form = appointmentFormRepository.save(AppointmentForm(appointmentFormModel, artist, client))
+        val form = appointmentRepository.save(Appointment(appointmentFormModel, artist, client))
         referenceRepository.saveAll(appointmentFormModel.references.map { it.toEntity(form) })
         eventPublisher.publishEvent(AppointmentVerificationEmailRequested(appointmentFormModel.clientEmail, form.id))
     }
@@ -65,8 +68,12 @@ class AppointmentServiceImpl(
 
     @Transactional
     override fun verify(formId: UUID) {
-        val form = appointmentFormRepository.findById(formId).orElseThrow { AppointmentFormNotFoundException() }
+        val form = appointmentRepository.findById(formId).orElseThrow { AppointmentFormNotFoundException() }
         form.verifiedAt = Instant.now()
-        appointmentFormRepository.save(form)
+        appointmentRepository.save(form)
     }
+
+    override fun getAppointmentsOf(artistId: UUID, pageable: Pageable): Page<AppointmentItemModel> =
+        appointmentRepository.findByArtistIdAndVerifiedAtNotNull(artistId, pageable)
+            .map { it.toModel() }
 }
