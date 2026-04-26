@@ -72,6 +72,7 @@ class TattooArtistServiceImpl(
         artistName?.let { artist.artistName = it }
         slug?.let { artist.slug = it }
         val updatedArtist = repository.save(artist)
+        logger.info("Profile updated for tattoo artist: {}", artist.email)
         val profilePhotoUrl = updatedArtist.profilePhotoKey?.let { storageService.getSignedUrl(it) }
         return ProfileResponseDto(updatedArtist, profilePhotoUrl)
     }
@@ -83,11 +84,20 @@ class TattooArtistServiceImpl(
     }
 
     @Transactional
+    override fun updatePassword(artistId: UUID, encodedPassword: String) {
+        val artist = findById(artistId)
+        artist.password = encodedPassword
+        repository.save(artist)
+        logger.info("Password updated for tattoo artist: {}", artist.email)
+    }
+
+    @Transactional
     override fun updatePhoto(artistId: UUID, photo: MultipartFile): String {
         val artist = findById(artistId)
         val photoKey = "artists/$artistId/profile-photo"
         artist.profilePhotoKey = photoKey
         repository.save(artist)
+        logger.info("Photo updated for tattoo artist: {}", artist.email)
         return storageService.upload(photoKey, photo.bytes, photo.contentType!!)
     }
 }

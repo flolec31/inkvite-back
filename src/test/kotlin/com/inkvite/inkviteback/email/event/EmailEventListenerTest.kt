@@ -27,11 +27,12 @@ class EmailEventListenerTest {
 
     @Test
     fun `on ArtistVerificationEmailRequested delegates to email service`() {
-        val event = ArtistVerificationEmailRequested(to = "user@example.com", artistName = "Test Artist", token = "abc123")
+        val event =
+            ArtistVerificationEmailRequested(to = "user@example.com", artistName = "Test Artist", token = "abc123")
 
         listener.on(event)
 
-        verify(emailService).sendArtistVerificationEmail("user@example.com", "abc123")
+        verify(emailService).sendArtistVerificationEmail("user@example.com", "Test Artist", "abc123")
     }
 
     @Test

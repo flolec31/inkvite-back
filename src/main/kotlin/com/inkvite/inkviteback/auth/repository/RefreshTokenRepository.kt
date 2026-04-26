@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface RefreshTokenRepository : JpaRepository<RefreshToken, UUID>
+interface RefreshTokenRepository : JpaRepository<RefreshToken, UUID> {
+    fun deleteAllByTattooArtistId(tattooArtistId: UUID)
+}

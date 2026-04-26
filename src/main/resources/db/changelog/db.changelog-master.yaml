@@ -7,3 +7,5 @@ databaseChangeLog:
       path: db/changelog/3-tattoo-artist-profile-slug-name-photo/
   - includeAll:
       path: db/changelog/4-appointment-form-request/
+  - includeAll:
+      path: db/changelog/18-forgot-password/
