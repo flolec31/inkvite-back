@@ -1,9 +1,9 @@
 package com.inkvite.inkviteback.artist.service.implementation
 
+import com.inkvite.inkviteback.artist.dto.ProfileResponseDto
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.artist.exception.TattooArtistAlreadyExistsException
 import com.inkvite.inkviteback.artist.exception.TattooArtistNotFoundException
-import com.inkvite.inkviteback.artist.model.TattooArtistProfileModel
 import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
 import com.inkvite.inkviteback.artist.service.TattooArtistService
 import com.inkvite.inkviteback.storage.service.StorageService
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 @Service
 @Transactional(readOnly = true)
@@ -67,16 +67,13 @@ class TattooArtistServiceImpl(
     }
 
     @Transactional
-    override fun updateProfile(artistId: UUID, artistName: String?, slug: String?): TattooArtistProfileModel {
+    override fun updateProfile(artistId: UUID, artistName: String?, slug: String?): ProfileResponseDto {
         val artist = findById(artistId)
         artistName?.let { artist.artistName = it }
         slug?.let { artist.slug = it }
         val updatedArtist = repository.save(artist)
-        return TattooArtistProfileModel(
-            artistName = updatedArtist.artistName,
-            slug = updatedArtist.slug,
-            profilePhotoUrl = updatedArtist.profilePhotoKey?.let { storageService.getSignedUrl(it) }
-        )
+        val profilePhotoUrl = updatedArtist.profilePhotoKey?.let { storageService.getSignedUrl(it) }
+        return ProfileResponseDto(updatedArtist, profilePhotoUrl)
     }
 
     @Transactional

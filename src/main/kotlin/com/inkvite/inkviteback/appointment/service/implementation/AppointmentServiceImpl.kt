@@ -1,13 +1,8 @@
 package com.inkvite.inkviteback.appointment.service.implementation
 
-import com.inkvite.inkviteback.appointment.dto.AppointmentDetailsResponseDto
-import com.inkvite.inkviteback.appointment.dto.ReferenceDetailsResponseDto
-import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.appointment.dto.*
 import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailRequested
 import com.inkvite.inkviteback.appointment.exception.*
-import com.inkvite.inkviteback.appointment.model.AppointmentFormModel
-import com.inkvite.inkviteback.appointment.model.AppointmentItemModel
-import com.inkvite.inkviteback.appointment.model.UploadedReferenceModel
 import com.inkvite.inkviteback.appointment.repository.AppointmentRepository
 import com.inkvite.inkviteback.appointment.repository.ReferenceRepository
 import com.inkvite.inkviteback.appointment.service.AppointmentService
@@ -35,22 +30,22 @@ class AppointmentServiceImpl(
 ) : AppointmentService {
 
     @Transactional
-    override fun save(appointmentFormModel: AppointmentFormModel) {
-        val artist = tattooArtistService.findBySlug(appointmentFormModel.artistSlug)
+    override fun save(appointmentDto: AppointmentFormRequestDto, slug: String) {
+        val artist = tattooArtistService.findBySlug(slug)
         val client = tattooClientService.findOrCreate(
-            appointmentFormModel.clientEmail,
-            appointmentFormModel.clientFirstName,
-            appointmentFormModel.clientLastName
+            appointmentDto.email,
+            appointmentDto.firstName,
+            appointmentDto.lastName
         )
-        val form = appointmentRepository.save(Appointment(appointmentFormModel, artist, client))
-        referenceRepository.saveAll(appointmentFormModel.references.map { it.toEntity(form) })
-        eventPublisher.publishEvent(AppointmentVerificationEmailRequested(appointmentFormModel.clientEmail, form.id))
+        val appointment = appointmentRepository.save(appointmentDto.toEntity(artist, client))
+        referenceRepository.saveAll(appointmentDto.references.map { it.toEntity(appointment) })
+        eventPublisher.publishEvent(AppointmentVerificationEmailRequested(appointmentDto.email, appointment.id))
     }
 
     override fun uploadReference(
         slug: String,
         photo: MultipartFile
-    ): UploadedReferenceModel {
+    ): ReferenceUploadResponseDto {
         val allowedTypes = setOf("image/jpeg", "image/png", "image/webp")
         if (photo.contentType !in allowedTypes) throw InvalidReferenceContentTypeException()
         if (photo.size > 5 * 1024 * 1024) throw ReferenceTooLargeException()
@@ -62,7 +57,7 @@ class AppointmentServiceImpl(
         } catch (e: Exception) {
             throw ReferenceUploadFailedException(e)
         }
-        return UploadedReferenceModel(key = photoKey, url = url)
+        return ReferenceUploadResponseDto(key = photoKey, url = url)
     }
 
     @Transactional
@@ -72,9 +67,9 @@ class AppointmentServiceImpl(
         appointmentRepository.save(form)
     }
 
-    override fun getAppointmentsOf(artistId: UUID, pageable: Pageable): Page<AppointmentItemModel> =
+    override fun getAppointmentsOf(artistId: UUID, pageable: Pageable): Page<AppointmentItemResponseDto> =
         appointmentRepository.findByArtistIdAndVerifiedAtNotNull(artistId, pageable)
-            .map { it.toModel() }
+            .map { AppointmentItemResponseDto(it) }
 
     override fun getAppointmentDetails(
         artistId: UUID,

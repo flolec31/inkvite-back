@@ -31,14 +31,14 @@ class AppointmentController(
     fun newAppointmentForm(
         @PathVariable @Pattern(regexp = "^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$") slug: String,
         @Valid @RequestBody form: AppointmentFormRequestDto
-    ) = appointmentService.save(form.toModel(slug))
+    ) = appointmentService.save(form, slug)
 
     @PostMapping("/{slug}/reference", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @ResponseStatus(HttpStatus.CREATED)
     fun uploadReference(
         @PathVariable @Pattern(regexp = "^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$") slug: String,
         @RequestParam("photo") photo: MultipartFile
-    ): ReferenceUploadResponseDto = appointmentService.uploadReference(slug, photo).toDto()
+    ): ReferenceUploadResponseDto = appointmentService.uploadReference(slug, photo)
 
     @GetMapping("/verify")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -53,7 +53,7 @@ class AppointmentController(
         val artistId = UUID.fromString(authentication.token.subject)
         val appointments = appointmentService.getAppointmentsOf(artistId, pageable)
         return PagedResponseDto(
-            content = appointments.content.map { it.toDto() },
+            content = appointments.content,
             total = appointments.totalElements,
             page = appointments.number,
             pageCount = appointments.totalPages
