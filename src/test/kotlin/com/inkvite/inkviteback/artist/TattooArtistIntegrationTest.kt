@@ -203,4 +203,38 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
         )
             .andExpect(status().isUnauthorized)
     }
+
+    // --- GET /artists/me ---
+
+    @Test
+    fun `get profile returns artist name, slug, and null photo url when no photo is set`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+
+        mockMvc.perform(
+            get("/artists/me")
+                .header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.artistName").value("Test Artist"))
+            .andExpect(jsonPath("$.slug").value("test-artist"))
+            .andExpect(jsonPath("$.profilePhotoUrl").doesNotExist())
+    }
+
+    @Test
+    fun `get profile without authentication returns 401`() {
+        mockMvc.perform(get("/artists/me"))
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `get profile with jwt subject not matching any artist returns 404`() {
+        val token = jwtService.generateAccessToken(UUID.randomUUID())
+
+        mockMvc.perform(
+            get("/artists/me")
+                .header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isNotFound)
+    }
 }

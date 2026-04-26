@@ -78,7 +78,7 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `verify with valid token activates artist and deletes token`() {
+    fun `verify with valid token activates artist, deletes token, and returns tokens`() {
         mockMvc.perform(
             post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -87,10 +87,13 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
         val token = tokenRepository.findAll().single().token
 
         mockMvc.perform(get("/auth/verify").param("token", token))
-            .andExpect(status().isNoContent)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.accessToken").isString)
+            .andExpect(jsonPath("$.refreshToken").isString)
 
         assertThat(artistRepository.findAll().single().activatedAt).isNotNull()
         assertThat(tokenRepository.findAll()).isEmpty()
+        assertThat(refreshTokenRepository.findAll()).hasSize(1)
     }
 
     @Test
