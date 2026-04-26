@@ -1,9 +1,6 @@
 package com.inkvite.inkviteback.appointment.controller
 
-import com.inkvite.inkviteback.appointment.exception.AppointmentFormNotFoundException
-import com.inkvite.inkviteback.appointment.exception.InvalidReferenceContentTypeException
-import com.inkvite.inkviteback.appointment.exception.ReferenceUploadFailedException
-import com.inkvite.inkviteback.appointment.exception.ReferenceTooLargeException
+import com.inkvite.inkviteback.appointment.exception.*
 import com.inkvite.inkviteback.common.AbstractControllerAdvice
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -13,9 +10,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 @RestControllerAdvice
 class AppointmentControllerAdvice : AbstractControllerAdvice() {
 
-    @ExceptionHandler(AppointmentFormNotFoundException::class)
+    @ExceptionHandler(AppointmentNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    fun handleAppointmentFormNotFound(e: AppointmentFormNotFoundException) = handleException(e)
+    fun handleAppointmentNotFound(e: AppointmentNotFoundException) = handleException(e)
 
     @ExceptionHandler(InvalidReferenceContentTypeException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -28,4 +25,8 @@ class AppointmentControllerAdvice : AbstractControllerAdvice() {
     @ExceptionHandler(ReferenceUploadFailedException::class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     fun handleReferenceUploadFailed(e: ReferenceUploadFailedException) = handleException(e, is5xx = true)
+
+    @ExceptionHandler(AppointmentBelongsToAnotherArtistException::class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    fun handleAppointmentBelongsToAnotherArtist(e: AppointmentBelongsToAnotherArtistException) = handleException(e)
 }

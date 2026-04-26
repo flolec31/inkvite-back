@@ -1,8 +1,9 @@
 package com.inkvite.inkviteback.appointment.controller
 
+import com.inkvite.inkviteback.appointment.dto.AppointmentDetailsResponseDto
 import com.inkvite.inkviteback.appointment.dto.AppointmentFormRequestDto
 import com.inkvite.inkviteback.appointment.dto.AppointmentItemResponseDto
-import com.inkvite.inkviteback.appointment.dto.ReferenceResponseDto
+import com.inkvite.inkviteback.appointment.dto.ReferenceUploadResponseDto
 import com.inkvite.inkviteback.appointment.service.AppointmentService
 import com.inkvite.inkviteback.common.dto.PagedResponseDto
 import jakarta.validation.Valid
@@ -37,7 +38,7 @@ class AppointmentController(
     fun uploadReference(
         @PathVariable @Pattern(regexp = "^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$") slug: String,
         @RequestParam("photo") photo: MultipartFile
-    ): ReferenceResponseDto = appointmentService.uploadReference(slug, photo).toDto()
+    ): ReferenceUploadResponseDto = appointmentService.uploadReference(slug, photo).toDto()
 
     @GetMapping("/verify")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -57,6 +58,15 @@ class AppointmentController(
             page = appointments.number,
             pageCount = appointments.totalPages
         )
+    }
+
+    @GetMapping("/{appointmentId}")
+    fun getAppointment(
+        authentication: JwtAuthenticationToken,
+        @PathVariable appointmentId: UUID,
+    ): AppointmentDetailsResponseDto {
+        val artistId = UUID.fromString(authentication.token.subject)
+        return appointmentService.getAppointmentDetails(artistId, appointmentId)
     }
 
 }

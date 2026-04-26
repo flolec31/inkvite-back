@@ -20,15 +20,13 @@ import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import tools.jackson.databind.ObjectMapper
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.UUID
+import java.util.*
 
 class AppointmentIntegrationTest : AbstractIntegrationTest() {
 
@@ -297,7 +295,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
     fun `verify appointment form with unknown id returns 404`() {
         mockMvc.perform(get("/appointment/verify").param("formId", UUID.randomUUID().toString()))
             .andExpect(status().isNotFound)
-            .andExpect(jsonPath("$.error").value("Appointment form not found"))
+            .andExpect(jsonPath("$.error").value("Appointment not found"))
     }
 
     // --- GET /appointment/ ---

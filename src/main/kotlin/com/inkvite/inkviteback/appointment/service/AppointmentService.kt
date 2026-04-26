@@ -1,5 +1,6 @@
 package com.inkvite.inkviteback.appointment.service
 
+import com.inkvite.inkviteback.appointment.dto.AppointmentDetailsResponseDto
 import com.inkvite.inkviteback.appointment.model.AppointmentFormModel
 import com.inkvite.inkviteback.appointment.model.AppointmentItemModel
 import com.inkvite.inkviteback.appointment.model.UploadedReferenceModel
@@ -13,4 +14,5 @@ interface AppointmentService {
     fun uploadReference(slug: String, photo: MultipartFile): UploadedReferenceModel
     fun verify(formId: UUID)
     fun getAppointmentsOf(artistId: UUID, pageable: Pageable): Page<AppointmentItemModel>
+    fun getAppointmentDetails(artistId: UUID, appointmentId: UUID): AppointmentDetailsResponseDto
 }
