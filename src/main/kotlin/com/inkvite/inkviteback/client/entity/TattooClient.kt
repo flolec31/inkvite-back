@@ -12,4 +12,6 @@ class TattooClient(
     var email: String,
     var firstName: String,
     var lastName: String,
-)
+) {
+    fun getFullName() = "${firstName.replaceFirstChar(Char::titlecase)} ${lastName.replaceFirstChar(Char::titlecase)}"
+}

@@ -7,6 +7,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -37,9 +38,9 @@ class SecurityConfig(
                 it.requestMatchers("/artists/slug-available").permitAll()
                 it.requestMatchers("/swagger-ui/**").permitAll()
                 it.requestMatchers("/v3/api-docs/**").permitAll()
-                it.requestMatchers("/appointment/{slug}").permitAll()
-                it.requestMatchers("/appointment/{slug}/reference").permitAll()
-                it.requestMatchers("/appointment/verify").permitAll()
+                it.requestMatchers(HttpMethod.POST, "/appointment/{slug}").permitAll()
+                it.requestMatchers(HttpMethod.POST, "/appointment/{slug}/reference").permitAll()
+                it.requestMatchers(HttpMethod.GET, "/appointment/verify").permitAll()
                 it.anyRequest().authenticated()
             }
             .oauth2ResourceServer {

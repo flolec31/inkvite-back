@@ -1,14 +1,8 @@
 package com.inkvite.inkviteback.appointment.service.implementation
 
-import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.appointment.dto.*
 import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailRequested
-import com.inkvite.inkviteback.appointment.exception.AppointmentFormNotFoundException
-import com.inkvite.inkviteback.appointment.exception.InvalidReferenceContentTypeException
-import com.inkvite.inkviteback.appointment.exception.ReferenceUploadFailedException
-import com.inkvite.inkviteback.appointment.exception.ReferenceTooLargeException
-import com.inkvite.inkviteback.appointment.model.AppointmentFormModel
-import com.inkvite.inkviteback.appointment.model.AppointmentItemModel
-import com.inkvite.inkviteback.appointment.model.UploadedReferenceModel
+import com.inkvite.inkviteback.appointment.exception.*
 import com.inkvite.inkviteback.appointment.repository.AppointmentRepository
 import com.inkvite.inkviteback.appointment.repository.ReferenceRepository
 import com.inkvite.inkviteback.appointment.service.AppointmentService
@@ -22,7 +16,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 @Service
 @Transactional(readOnly = true)
@@ -36,22 +30,22 @@ class AppointmentServiceImpl(
 ) : AppointmentService {
 
     @Transactional
-    override fun save(appointmentFormModel: AppointmentFormModel) {
-        val artist = tattooArtistService.findBySlug(appointmentFormModel.artistSlug)
+    override fun save(appointmentDto: AppointmentFormRequestDto, slug: String) {
+        val artist = tattooArtistService.findBySlug(slug)
         val client = tattooClientService.findOrCreate(
-            appointmentFormModel.clientEmail,
-            appointmentFormModel.clientFirstName,
-            appointmentFormModel.clientLastName
+            appointmentDto.email,
+            appointmentDto.firstName,
+            appointmentDto.lastName
         )
-        val form = appointmentRepository.save(Appointment(appointmentFormModel, artist, client))
-        referenceRepository.saveAll(appointmentFormModel.references.map { it.toEntity(form) })
-        eventPublisher.publishEvent(AppointmentVerificationEmailRequested(appointmentFormModel.clientEmail, form.id))
+        val appointment = appointmentRepository.save(appointmentDto.toEntity(artist, client))
+        referenceRepository.saveAll(appointmentDto.references.map { it.toEntity(appointment) })
+        eventPublisher.publishEvent(AppointmentVerificationEmailRequested(appointmentDto.email, appointment.id))
     }
 
     override fun uploadReference(
         slug: String,
         photo: MultipartFile
-    ): UploadedReferenceModel {
+    ): ReferenceUploadResponseDto {
         val allowedTypes = setOf("image/jpeg", "image/png", "image/webp")
         if (photo.contentType !in allowedTypes) throw InvalidReferenceContentTypeException()
         if (photo.size > 5 * 1024 * 1024) throw ReferenceTooLargeException()
@@ -63,17 +57,39 @@ class AppointmentServiceImpl(
         } catch (e: Exception) {
             throw ReferenceUploadFailedException(e)
         }
-        return UploadedReferenceModel(key = photoKey, url = url)
+        return ReferenceUploadResponseDto(key = photoKey, url = url)
     }
 
     @Transactional
     override fun verify(formId: UUID) {
-        val form = appointmentRepository.findById(formId).orElseThrow { AppointmentFormNotFoundException() }
+        val form = appointmentRepository.findById(formId).orElseThrow { AppointmentNotFoundException() }
         form.verifiedAt = Instant.now()
         appointmentRepository.save(form)
     }
 
-    override fun getAppointmentsOf(artistId: UUID, pageable: Pageable): Page<AppointmentItemModel> =
+    override fun getAppointmentsOf(artistId: UUID, pageable: Pageable): Page<AppointmentItemResponseDto> =
         appointmentRepository.findByArtistIdAndVerifiedAtNotNull(artistId, pageable)
-            .map { it.toModel() }
+            .map { AppointmentItemResponseDto(it) }
+
+    @Transactional
+    override fun getAppointmentDetails(
+        artistId: UUID,
+        appointmentId: UUID
+    ): AppointmentDetailsResponseDto {
+        val appointment = appointmentRepository.findByIdAndVerifiedAtNotNull(appointmentId)
+            .orElseThrow { AppointmentNotFoundException() }
+        if (appointment.artist.id != artistId) throw AppointmentBelongsToAnotherArtistException()
+
+        if (appointment.new) {
+            appointment.new = false
+            appointmentRepository.save(appointment)
+        }
+
+        val references = referenceRepository.findByAppointmentId(appointmentId)
+        val referencesDto = references.map {
+            val url = storageService.getSignedUrl(it.key)
+            ReferenceDetailsResponseDto(it, url)
+        }
+        return AppointmentDetailsResponseDto(appointment, referencesDto)
+    }
 }

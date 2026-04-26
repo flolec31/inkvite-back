@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface ReferenceRepository : JpaRepository<Reference, UUID>
+interface ReferenceRepository : JpaRepository<Reference, UUID> {
+    fun findByAppointmentId(appointmentId: UUID): List<Reference>
+}

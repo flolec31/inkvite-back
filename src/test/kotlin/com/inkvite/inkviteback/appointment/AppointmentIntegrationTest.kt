@@ -20,15 +20,13 @@ import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import tools.jackson.databind.ObjectMapper
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.UUID
+import java.util.*
 
 class AppointmentIntegrationTest : AbstractIntegrationTest() {
 
@@ -297,7 +295,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
     fun `verify appointment form with unknown id returns 404`() {
         mockMvc.perform(get("/appointment/verify").param("formId", UUID.randomUUID().toString()))
             .andExpect(status().isNotFound)
-            .andExpect(jsonPath("$.error").value("Appointment form not found"))
+            .andExpect(jsonPath("$.error").value("Appointment not found"))
     }
 
     // --- GET /appointment/ ---
@@ -408,5 +406,129 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.content[0].id").value(newer.id.toString()))
             .andExpect(jsonPath("$.content[1].id").value(older.id.toString()))
+    }
+
+    // --- GET /appointment/{appointmentId} ---
+
+    @Test
+    fun `get appointment details returns 401 when not authenticated`() {
+        mockMvc.perform(get("/appointment/${UUID.randomUUID()}"))
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `get appointment details returns 404 when appointment does not exist`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+
+        mockMvc.perform(get("/appointment/${UUID.randomUUID()}").header("Authorization", "Bearer $token"))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.error").value("Appointment not found"))
+    }
+
+    @Test
+    fun `get appointment details returns 404 when appointment is not verified`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+        val client = tattooClientRepository.save(TattooClient(email = "client@test.com", firstName = "Jane", lastName = "Doe"))
+        val unverified = appointmentRepository.save(
+            Appointment(
+                artist = artist,
+                client = client,
+                tattooDescription = "A tattoo",
+                tattooPlacement = "arm",
+                tattooSize = "10x10cm",
+                firstTattoo = false,
+                coverUp = false,
+                verifiedAt = null
+            )
+        )
+
+        mockMvc.perform(get("/appointment/${unverified.id}").header("Authorization", "Bearer $token"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `get appointment details returns 403 when appointment belongs to another artist`() {
+        val artist = createActivatedArtist(slug = "my-artist")
+        val other = createActivatedArtist(slug = "other-artist")
+        val token = jwtService.generateAccessToken(artist.id)
+        val appointment = saveVerifiedAppointment(other)
+
+        mockMvc.perform(get("/appointment/${appointment.id}").header("Authorization", "Bearer $token"))
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.error").value("The requested appointment belongs to another artist"))
+    }
+
+    @Test
+    fun `get appointment details returns all fields for verified appointment`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+        val appointment = saveVerifiedAppointment(artist)
+
+        mockMvc.perform(get("/appointment/${appointment.id}").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(appointment.id.toString()))
+            .andExpect(jsonPath("$.tattooDescription").value("A beautiful dragon tattoo on my forearm"))
+            .andExpect(jsonPath("$.tattooPlacement").value("forearm"))
+            .andExpect(jsonPath("$.tattooSize").value("10x10cm"))
+            .andExpect(jsonPath("$.firstTattoo").value(false))
+            .andExpect(jsonPath("$.coverUp").value(false))
+            .andExpect(jsonPath("$.receivedAt").isString)
+            .andExpect(jsonPath("$.clientName").value("Jane Doe"))
+            .andExpect(jsonPath("$.clientEmail").value(org.hamcrest.Matchers.containsString("@test.com")))
+            .andExpect(jsonPath("$.references").isArray)
+    }
+
+    @Test
+    fun `get appointment details returns signed urls for references`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+        val appointment = saveVerifiedAppointment(artist)
+        referenceRepository.save(com.inkvite.inkviteback.appointment.entity.Reference(
+            appointment = appointment,
+            key = "references/${artist.id}/ref1.jpg",
+            comment = "Like this style"
+        ))
+        referenceRepository.save(com.inkvite.inkviteback.appointment.entity.Reference(
+            appointment = appointment,
+            key = "references/${artist.id}/ref2.jpg",
+            comment = null
+        ))
+
+        mockMvc.perform(get("/appointment/${appointment.id}").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.references.length()").value(2))
+            .andExpect(jsonPath("$.references[0].id").isString)
+            .andExpect(jsonPath("$.references[0].url").value(org.hamcrest.Matchers.containsString("X-Amz-Signature")))
+            .andExpect(jsonPath("$.references[0].comment").value("Like this style"))
+            .andExpect(jsonPath("$.references[1].url").value(org.hamcrest.Matchers.containsString("X-Amz-Signature")))
+            .andExpect(jsonPath("$.references[1].comment").value(null as String?))
+    }
+
+    @Test
+    fun `get appointment details marks appointment as seen on first access`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+        val appointment = saveVerifiedAppointment(artist)
+        assertThat(appointment.new).isTrue()
+
+        mockMvc.perform(get("/appointment/${appointment.id}").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+
+        assertThat(appointmentRepository.findById(appointment.id).get().new).isFalse()
+    }
+
+    @Test
+    fun `get appointment details does not change new flag on subsequent access`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+        val appointment = saveVerifiedAppointment(artist)
+
+        mockMvc.perform(get("/appointment/${appointment.id}").header("Authorization", "Bearer $token"))
+        mockMvc.perform(get("/appointment/${appointment.id}").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+
+        assertThat(appointmentRepository.findById(appointment.id).get().new).isFalse()
     }
 }

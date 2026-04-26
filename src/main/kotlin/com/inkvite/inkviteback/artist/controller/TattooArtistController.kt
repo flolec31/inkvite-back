@@ -38,8 +38,7 @@ class TattooArtistController(
         if (request.slug != null && tattooArtistService.existsBySlugAndIdNot(request.slug, artistId)) {
             throw SlugAlreadyTakenException()
         }
-        val updatedProfile = tattooArtistService.updateProfile(artistId, request.artistName, request.slug)
-        return ProfileResponseDto(updatedProfile)
+        return tattooArtistService.updateProfile(artistId, request.artistName, request.slug)
     }
 
     @PostMapping("/me/photo", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
