@@ -2,4 +2,4 @@ package com.inkvite.inkviteback.appointment.event
 
 import com.inkvite.inkviteback.appointment.entity.Appointment
 
-data class AppointmentVerificationEmailRequested(val appointment: Appointment)
+data class AppointmentNotificationEmailRequested(val appointment: Appointment)

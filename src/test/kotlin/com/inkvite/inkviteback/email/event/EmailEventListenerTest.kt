@@ -1,8 +1,13 @@
 package com.inkvite.inkviteback.email.event
 
+import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.appointment.event.AppointmentNotificationEmailRequested
 import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailRequested
+import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.auth.event.ArtistVerificationEmailRequested
+import com.inkvite.inkviteback.client.entity.TattooClient
 import com.inkvite.inkviteback.email.service.EmailService
+import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -21,8 +26,8 @@ class EmailEventListenerTest {
     private lateinit var listener: EmailEventListener
 
     @Test
-    fun `on VerificationEmailRequested delegates to email service`() {
-        val event = ArtistVerificationEmailRequested(to = "user@example.com", token = "abc123")
+    fun `on ArtistVerificationEmailRequested delegates to email service`() {
+        val event = ArtistVerificationEmailRequested(to = "user@example.com", artistName = "Test Artist", token = "abc123")
 
         listener.on(event)
 
@@ -31,11 +36,43 @@ class EmailEventListenerTest {
 
     @Test
     fun `on AppointmentVerificationEmailRequested delegates to email service`() {
-        val formId = UUID.randomUUID()
-        val event = AppointmentVerificationEmailRequested(to = "client@example.com", form = formId)
+        val appointment = buildAppointment()
+        val event = AppointmentVerificationEmailRequested(appointment)
 
         listener.on(event)
 
-        verify(emailService).sendAppointmentVerificationEmail("client@example.com", formId)
+        verify(emailService).sendAppointmentVerificationEmail(appointment)
+    }
+
+    @Test
+    fun `on AppointmentNotificationEmailRequested delegates to email service`() {
+        val appointment = buildAppointment()
+        val event = AppointmentNotificationEmailRequested(appointment)
+
+        listener.on(event)
+
+        verify(emailService).sendAppointmentNotificationEmail(appointment)
+    }
+
+    private fun buildAppointment(): Appointment {
+        val artist = TattooArtist(
+            id = UUID.randomUUID(),
+            email = "artist@test.com",
+            password = "hashed",
+            artistName = "Test Artist",
+            slug = "test-artist",
+            registeredAt = Instant.now(),
+            activatedAt = Instant.now()
+        )
+        val client = TattooClient(email = "client@test.com", firstName = "Jane", lastName = "Doe")
+        return Appointment(
+            artist = artist,
+            client = client,
+            tattooDescription = "A beautiful dragon tattoo",
+            tattooPlacement = "forearm",
+            tattooSize = "10x10cm",
+            firstTattoo = false,
+            coverUp = false
+        )
     }
 }

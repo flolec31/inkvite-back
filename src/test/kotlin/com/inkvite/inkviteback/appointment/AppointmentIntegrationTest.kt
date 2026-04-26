@@ -15,6 +15,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
+import org.mockito.kotlin.argThat
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
@@ -102,7 +103,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
         assertThat(client.firstName).isEqualTo("Jane")
         assertThat(client.lastName).isEqualTo("Doe")
 
-        verify(emailService).sendAppointmentVerificationEmail("client@test.com", form.id)
+        verify(emailService).sendAppointmentVerificationEmail(argThat { id == form.id })
     }
 
     @Test
@@ -285,15 +286,31 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
         val form = appointmentRepository.findAll().single()
         assertThat(form.verifiedAt).isNull()
 
-        mockMvc.perform(get("/appointment/verify").param("formId", form.id.toString()))
+        mockMvc.perform(get("/appointment/verify").param("appointmentId", form.id.toString()))
             .andExpect(status().isNoContent)
 
         assertThat(appointmentRepository.findById(form.id).get().verifiedAt).isNotNull()
     }
 
     @Test
+    fun `verify appointment form sends notification email to artist`() {
+        val artist = createActivatedArtist()
+        mockMvc.perform(
+            post("/appointment/${artist.slug}")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validFormBody()))
+        )
+        val form = appointmentRepository.findAll().single()
+
+        mockMvc.perform(get("/appointment/verify").param("appointmentId", form.id.toString()))
+            .andExpect(status().isNoContent)
+
+        verify(emailService).sendAppointmentNotificationEmail(argThat { id == form.id })
+    }
+
+    @Test
     fun `verify appointment form with unknown id returns 404`() {
-        mockMvc.perform(get("/appointment/verify").param("formId", UUID.randomUUID().toString()))
+        mockMvc.perform(get("/appointment/verify").param("appointmentId", UUID.randomUUID().toString()))
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.error").value("Appointment not found"))
     }

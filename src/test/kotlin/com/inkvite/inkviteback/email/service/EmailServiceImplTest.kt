@@ -1,7 +1,11 @@
 package com.inkvite.inkviteback.email.service
 
+import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.artist.entity.TattooArtist
+import com.inkvite.inkviteback.client.entity.TattooClient
 import com.inkvite.inkviteback.email.client.ResendEmailClient
 import com.inkvite.inkviteback.email.service.implementation.EmailServiceImpl
+import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -30,19 +34,66 @@ class EmailServiceImplTest {
         verify(resendEmailClient).sendEmail(
             "user@example.com",
             "verify-artist-email",
-            mapOf("link" to "http://localhost:8080/auth/verify?token=abc123")
+            mapOf("LINK" to "http://localhost:8080/auth/verify?token=abc123")
         )
     }
 
     @Test
     fun `sendAppointmentVerificationEmail builds verification link and delegates to client`() {
-        val formId = UUID.fromString("00000000-0000-0000-0000-000000000001")
-        emailService.sendAppointmentVerificationEmail("client@example.com", formId)
+        val appointment = buildAppointment(clientEmail = "client@test.com")
+
+        emailService.sendAppointmentVerificationEmail(appointment)
 
         verify(resendEmailClient).sendEmail(
-            "client@example.com",
+            "client@test.com",
             "verify-appointment-email",
-            mapOf("link" to "http://localhost:8080/appointment/verify?formId=$formId")
+            mapOf(
+                "LINK" to "http://localhost:8080/appointment/verify?appointmentId=${appointment.id}",
+                "ARTIST_NAME" to "Test Artist",
+                "CLIENT_FIRSTNAME" to "Jane"
+            )
+        )
+    }
+
+    @Test
+    fun `sendAppointmentNotificationEmail builds dashboard link and delegates to client`() {
+        val appointment = buildAppointment(artistEmail = "artist@test.com")
+
+        emailService.sendAppointmentNotificationEmail(appointment)
+
+        verify(resendEmailClient).sendEmail(
+            "artist@test.com",
+            "new-appointment-notification",
+            mapOf(
+                "DASHBOARD_LINK" to "http://localhost:8080/dashboard",
+                "ARTIST_NAME" to "Test Artist",
+                "CLIENT_NAME" to "Jane Doe"
+            )
+        )
+    }
+
+    private fun buildAppointment(
+        clientEmail: String = "client@test.com",
+        artistEmail: String = "artist@test.com"
+    ): Appointment {
+        val artist = TattooArtist(
+            id = UUID.randomUUID(),
+            email = artistEmail,
+            password = "hashed",
+            artistName = "Test Artist",
+            slug = "test-artist",
+            registeredAt = Instant.now(),
+            activatedAt = Instant.now()
+        )
+        val client = TattooClient(email = clientEmail, firstName = "Jane", lastName = "Doe")
+        return Appointment(
+            artist = artist,
+            client = client,
+            tattooDescription = "A beautiful dragon tattoo",
+            tattooPlacement = "forearm",
+            tattooSize = "10x10cm",
+            firstTattoo = false,
+            coverUp = false
         )
     }
 }

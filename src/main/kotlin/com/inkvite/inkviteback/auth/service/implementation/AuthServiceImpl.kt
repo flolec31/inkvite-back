@@ -7,12 +7,7 @@ import com.inkvite.inkviteback.auth.dto.LoginResponseDto
 import com.inkvite.inkviteback.auth.entity.RefreshToken
 import com.inkvite.inkviteback.auth.entity.VerificationToken
 import com.inkvite.inkviteback.auth.event.ArtistVerificationEmailRequested
-import com.inkvite.inkviteback.auth.exception.AccountNotActivatedException
-import com.inkvite.inkviteback.auth.exception.EmailAlreadyRegisteredException
-import com.inkvite.inkviteback.auth.exception.InvalidCredentialsException
-import com.inkvite.inkviteback.auth.exception.InvalidRefreshTokenException
-import com.inkvite.inkviteback.auth.exception.TokenExpiredException
-import com.inkvite.inkviteback.auth.exception.TokenNotFoundException
+import com.inkvite.inkviteback.auth.exception.*
 import com.inkvite.inkviteback.auth.repository.RefreshTokenRepository
 import com.inkvite.inkviteback.auth.repository.VerificationTokenRepository
 import com.inkvite.inkviteback.auth.service.AuthService
@@ -23,7 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 @Service
 @Transactional
@@ -47,17 +42,17 @@ class AuthServiceImpl(
             throw EmailAlreadyRegisteredException()
         }
         val verificationToken = VerificationToken(tattooArtistId = artistId)
-        tokenRepository.save(verificationToken)
-        eventPublisher.publishEvent(ArtistVerificationEmailRequested(email, verificationToken.token))
+        val token = tokenRepository.save(verificationToken).token
+        eventPublisher.publishEvent(ArtistVerificationEmailRequested(email, artistName, token))
     }
 
     override fun resendVerification(email: String) {
-        val artistId = tattooArtistService.findUnactivatedByEmail(email) ?: return
-        tokenRepository.findByTattooArtistId(artistId)?.let { tokenRepository.delete(it) }
-        val verificationToken = VerificationToken(tattooArtistId = artistId)
-        tokenRepository.save(verificationToken)
+        val artist = tattooArtistService.findUnactivatedByEmail(email) ?: return
+        tokenRepository.findByTattooArtistId(artist.id)?.let { tokenRepository.delete(it) }
+        val verificationToken = VerificationToken(tattooArtistId = artist.id)
+        val token = tokenRepository.save(verificationToken).token
         logger.debug("Verification token updated for tattoo artist {}", email)
-        eventPublisher.publishEvent(ArtistVerificationEmailRequested(email, verificationToken.token))
+        eventPublisher.publishEvent(ArtistVerificationEmailRequested(email, artist.artistName, token))
     }
 
     // noRollbackFor: TokenExpiredException must not roll back the transaction so the deletion below persists.

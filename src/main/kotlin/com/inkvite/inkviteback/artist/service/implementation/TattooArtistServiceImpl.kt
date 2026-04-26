@@ -41,8 +41,8 @@ class TattooArtistServiceImpl(
         return id
     }
 
-    override fun findUnactivatedByEmail(email: String): UUID? =
-        repository.findByEmailAndActivatedAtIsNull(email)?.id
+    override fun findUnactivatedByEmail(email: String): TattooArtist? =
+        repository.findByEmailAndActivatedAtIsNull(email)
 
     override fun findByEmail(email: String): TattooArtist? = repository.findByEmail(email)
 

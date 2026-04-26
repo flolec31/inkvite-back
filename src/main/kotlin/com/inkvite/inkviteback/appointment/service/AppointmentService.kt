@@ -12,7 +12,7 @@ import java.util.*
 interface AppointmentService {
     fun save(appointmentDto: AppointmentFormRequestDto, slug: String)
     fun uploadReference(slug: String, photo: MultipartFile): ReferenceUploadResponseDto
-    fun verify(formId: UUID)
+    fun verify(appointmentId: UUID)
     fun getAppointmentsOf(artistId: UUID, pageable: Pageable): Page<AppointmentItemResponseDto>
     fun getAppointmentDetails(artistId: UUID, appointmentId: UUID): AppointmentDetailsResponseDto
 }
