@@ -16,4 +16,5 @@ interface TattooArtistService {
     fun findById(artistId: UUID): TattooArtist
     fun updateProfile(artistId: UUID, artistName: String?, slug: String?): ProfileResponseDto
     fun updatePhoto(artistId: UUID, photo: MultipartFile): String
+    fun getProfile(artistId: UUID): ProfileResponseDto
 }

@@ -5,7 +5,7 @@ import com.inkvite.inkviteback.auth.dto.LoginResponseDto
 interface AuthService {
     fun register(email: String, password: String, artistName: String, slug: String)
     fun resendVerification(email: String)
-    fun verify(token: String)
+    fun verify(token: String): LoginResponseDto
     fun login(email: String, password: String): LoginResponseDto
     fun refresh(refreshToken: String): LoginResponseDto
     fun logout(refreshToken: String)

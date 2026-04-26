@@ -57,7 +57,7 @@ class AuthServiceImpl(
 
     // noRollbackFor: TokenExpiredException must not roll back the transaction so the deletion below persists.
     @Transactional(noRollbackFor = [TokenExpiredException::class])
-    override fun verify(token: String) {
+    override fun verify(token: String): LoginResponseDto {
         val verificationToken = tokenRepository.findById(token).orElse(null) ?: throw TokenNotFoundException()
         if (verificationToken.expiresAt.isBefore(Instant.now())) {
             tokenRepository.delete(verificationToken)
@@ -65,16 +65,21 @@ class AuthServiceImpl(
         }
         tattooArtistService.activate(verificationToken.tattooArtistId)
         tokenRepository.delete(verificationToken)
+        return login(verificationToken.tattooArtistId)
     }
 
     override fun login(email: String, password: String): LoginResponseDto {
         val artist = tattooArtistService.findByEmail(email) ?: throw InvalidCredentialsException()
         if (!passwordEncoder.matches(password, artist.password)) throw InvalidCredentialsException()
         if (artist.activatedAt == null) throw AccountNotActivatedException()
-        val refreshToken = RefreshToken(tattooArtistId = artist.id)
+        return login(artist.id)
+    }
+
+    private fun login(artistId: UUID): LoginResponseDto {
+        val refreshToken = RefreshToken(tattooArtistId = artistId)
         refreshTokenRepository.save(refreshToken)
         return LoginResponseDto(
-            accessToken = jwtService.generateAccessToken(artist.id),
+            accessToken = jwtService.generateAccessToken(artistId),
             refreshToken = refreshToken.token.toString(),
         )
     }

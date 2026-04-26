@@ -25,14 +25,14 @@ class TattooArtistController(
 
     @GetMapping("/slug-available")
     fun isSlugAvailable(
-        @RequestParam @Pattern(regexp = "^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$") slug: String,
+        @RequestParam @Pattern(regexp = "^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$") slug: String
     ): SlugAvailabilityResponseDto =
         SlugAvailabilityResponseDto(available = !tattooArtistService.existsBySlug(slug))
 
     @PatchMapping("/me")
     fun updateProfile(
         @Valid @RequestBody request: UpdateProfileRequestDto,
-        authentication: JwtAuthenticationToken,
+        authentication: JwtAuthenticationToken
     ): ProfileResponseDto {
         val artistId = UUID.fromString(authentication.token.subject)
         if (request.slug != null && tattooArtistService.existsBySlugAndIdNot(request.slug, artistId)) {
@@ -41,10 +41,18 @@ class TattooArtistController(
         return tattooArtistService.updateProfile(artistId, request.artistName, request.slug)
     }
 
+    @GetMapping("/me")
+    fun getProfile(
+        authentication: JwtAuthenticationToken
+    ): ProfileResponseDto {
+        val artistId = UUID.fromString(authentication.token.subject)
+        return tattooArtistService.getProfile(artistId)
+    }
+
     @PostMapping("/me/photo", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun uploadPhoto(
         @RequestParam("photo") photo: MultipartFile,
-        authentication: JwtAuthenticationToken,
+        authentication: JwtAuthenticationToken
     ): PhotoUploadResponseDto {
         val allowedTypes = setOf("image/jpeg", "image/png", "image/webp")
         if (photo.contentType !in allowedTypes) throw InvalidPhotoContentTypeException()

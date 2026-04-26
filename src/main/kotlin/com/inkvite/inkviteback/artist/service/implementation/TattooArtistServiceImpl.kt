@@ -76,6 +76,12 @@ class TattooArtistServiceImpl(
         return ProfileResponseDto(updatedArtist, profilePhotoUrl)
     }
 
+    override fun getProfile(artistId: UUID): ProfileResponseDto {
+        val artist = findById(artistId)
+        val profilePhotoUrl = artist.profilePhotoKey?.let { storageService.getSignedUrl(it) }
+        return ProfileResponseDto(artist, profilePhotoUrl)
+    }
+
     @Transactional
     override fun updatePhoto(artistId: UUID, photo: MultipartFile): String {
         val artist = findById(artistId)

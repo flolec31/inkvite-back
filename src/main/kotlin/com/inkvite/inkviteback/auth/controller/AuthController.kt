@@ -1,11 +1,7 @@
 package com.inkvite.inkviteback.auth.controller
 
+import com.inkvite.inkviteback.auth.dto.*
 import com.inkvite.inkviteback.auth.service.AuthService
-import com.inkvite.inkviteback.auth.dto.LoginRequestDto
-import com.inkvite.inkviteback.auth.dto.LoginResponseDto
-import com.inkvite.inkviteback.auth.dto.LogoutRequestDto
-import com.inkvite.inkviteback.auth.dto.RefreshRequestDto
-import com.inkvite.inkviteback.auth.dto.RegisterRequestDto
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
@@ -22,8 +18,7 @@ class AuthController(
         authService.register(request.email, request.password, request.artistName, request.slug)
 
     @GetMapping("/verify")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun verify(@RequestParam token: String) =
+    fun verify(@RequestParam token: String): LoginResponseDto =
         authService.verify(token)
 
     @PostMapping("/resend-verification")
