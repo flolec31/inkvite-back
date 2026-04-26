@@ -71,6 +71,7 @@ class AppointmentServiceImpl(
         appointmentRepository.findByArtistIdAndVerifiedAtNotNull(artistId, pageable)
             .map { AppointmentItemResponseDto(it) }
 
+    @Transactional
     override fun getAppointmentDetails(
         artistId: UUID,
         appointmentId: UUID
