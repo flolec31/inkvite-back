@@ -1,8 +1,9 @@
 package com.inkvite.inkviteback.email.service
 
-import java.util.UUID
+import com.inkvite.inkviteback.appointment.entity.Appointment
 
 interface EmailService {
     fun sendArtistVerificationEmail(to: String, token: String)
-    fun sendAppointmentVerificationEmail(to: String, formId: UUID)
+    fun sendAppointmentVerificationEmail(appointment: Appointment)
+    fun sendAppointmentNotificationEmail(appointment: Appointment)
 }

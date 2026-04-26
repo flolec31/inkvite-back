@@ -42,8 +42,8 @@ class AppointmentController(
 
     @GetMapping("/verify")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun verify(@RequestParam formId: UUID) =
-        appointmentService.verify(formId)
+    fun verify(@RequestParam appointmentId: UUID) =
+        appointmentService.verify(appointmentId)
 
     @GetMapping("/")
     fun getAppointmentsList(

@@ -1,6 +1,7 @@
 package com.inkvite.inkviteback.appointment.service.implementation
 
 import com.inkvite.inkviteback.appointment.dto.*
+import com.inkvite.inkviteback.appointment.event.AppointmentNotificationEmailRequested
 import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailRequested
 import com.inkvite.inkviteback.appointment.exception.*
 import com.inkvite.inkviteback.appointment.repository.AppointmentRepository
@@ -39,7 +40,7 @@ class AppointmentServiceImpl(
         )
         val appointment = appointmentRepository.save(appointmentDto.toEntity(artist, client))
         referenceRepository.saveAll(appointmentDto.references.map { it.toEntity(appointment) })
-        eventPublisher.publishEvent(AppointmentVerificationEmailRequested(appointmentDto.email, appointment.id))
+        eventPublisher.publishEvent(AppointmentVerificationEmailRequested(appointment))
     }
 
     override fun uploadReference(
@@ -61,10 +62,11 @@ class AppointmentServiceImpl(
     }
 
     @Transactional
-    override fun verify(formId: UUID) {
-        val form = appointmentRepository.findById(formId).orElseThrow { AppointmentNotFoundException() }
-        form.verifiedAt = Instant.now()
-        appointmentRepository.save(form)
+    override fun verify(appointmentId: UUID) {
+        var appointment = appointmentRepository.findById(appointmentId).orElseThrow { AppointmentNotFoundException() }
+        appointment.verifiedAt = Instant.now()
+        appointment = appointmentRepository.save(appointment)
+        eventPublisher.publishEvent(AppointmentNotificationEmailRequested(appointment))
     }
 
     override fun getAppointmentsOf(artistId: UUID, pageable: Pageable): Page<AppointmentItemResponseDto> =

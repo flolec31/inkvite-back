@@ -8,7 +8,7 @@ import java.util.*
 interface TattooArtistService {
     fun register(email: String, encodedPassword: String, artistName: String, slug: String): UUID
     fun activate(artistId: UUID)
-    fun findUnactivatedByEmail(email: String): UUID?
+    fun findUnactivatedByEmail(email: String): TattooArtist?
     fun findByEmail(email: String): TattooArtist?
     fun findBySlug(slug: String): TattooArtist
     fun existsBySlug(slug: String): Boolean
