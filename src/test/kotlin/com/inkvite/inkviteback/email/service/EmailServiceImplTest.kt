@@ -42,6 +42,20 @@ class EmailServiceImplTest {
     }
 
     @Test
+    fun `sendPasswordResetEmail builds reset link and delegates to client`() {
+        emailService.sendPasswordResetEmail("user@example.com", "Test Artist", "reset-token-123")
+
+        verify(resendEmailClient).sendEmail(
+            "user@example.com",
+            "reset-password",
+            mapOf(
+                "LINK" to "http://localhost:8080/auth/reset-password?token=reset-token-123",
+                "ARTIST_NAME" to "Test Artist"
+            )
+        )
+    }
+
+    @Test
     fun `sendAppointmentVerificationEmail builds verification link and delegates to client`() {
         val appointment = buildAppointment(clientEmail = "client@test.com")
 
