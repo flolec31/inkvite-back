@@ -92,6 +92,12 @@ class TattooArtistServiceImpl(
     }
 
     @Transactional
+    override fun delete(artistId: UUID) {
+        repository.deleteById(artistId)
+        logger.info("Deleted tattoo artist: {}", artistId)
+    }
+
+    @Transactional
     override fun updatePhoto(artistId: UUID, photo: MultipartFile): String {
         val artist = findById(artistId)
         val photoKey = "artists/$artistId/profile-photo"

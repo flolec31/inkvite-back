@@ -39,6 +39,10 @@ class AuthServiceImpl(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun register(email: String, password: String, artistName: String, slug: String) {
+        tattooArtistService.findUnactivatedByEmail(email)?.let { unverified ->
+            tokenRepository.findByTattooArtistId(unverified.id)?.let { tokenRepository.delete(it) }
+            tattooArtistService.delete(unverified.id)
+        }
         if (tattooArtistService.existsBySlug(slug)) throw SlugAlreadyTakenException()
         val encodedPassword = passwordEncoder.encode(password)!!
         val artistId = try {
