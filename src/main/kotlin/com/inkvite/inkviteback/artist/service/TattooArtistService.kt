@@ -18,4 +18,5 @@ interface TattooArtistService {
     fun updatePhoto(artistId: UUID, photo: MultipartFile): String
     fun getProfile(artistId: UUID): ProfileResponseDto
     fun updatePassword(artistId: UUID, encodedPassword: String)
+    fun delete(artistId: UUID)
 }
