@@ -5,6 +5,7 @@ import com.inkvite.inkviteback.appointment.event.AppointmentNotificationEmailReq
 import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailRequested
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.auth.event.ArtistVerificationEmailRequested
+import com.inkvite.inkviteback.auth.event.PasswordResetEmailRequested
 import com.inkvite.inkviteback.client.entity.TattooClient
 import com.inkvite.inkviteback.email.service.EmailService
 import java.time.Instant
@@ -27,11 +28,21 @@ class EmailEventListenerTest {
 
     @Test
     fun `on ArtistVerificationEmailRequested delegates to email service`() {
-        val event = ArtistVerificationEmailRequested(to = "user@example.com", artistName = "Test Artist", token = "abc123")
+        val event =
+            ArtistVerificationEmailRequested(to = "user@example.com", artistName = "Test Artist", token = "abc123")
 
         listener.on(event)
 
-        verify(emailService).sendArtistVerificationEmail("user@example.com", "abc123")
+        verify(emailService).sendArtistVerificationEmail("user@example.com", "Test Artist", "abc123")
+    }
+
+    @Test
+    fun `on PasswordResetEmailRequested delegates to email service`() {
+        val event = PasswordResetEmailRequested(to = "user@example.com", artistName = "Test Artist", token = "reset-token-123")
+
+        listener.on(event)
+
+        verify(emailService).sendPasswordResetEmail("user@example.com", "Test Artist", "reset-token-123")
     }
 
     @Test

@@ -29,12 +29,29 @@ class EmailServiceImplTest {
 
     @Test
     fun `sendArtistVerificationEmail builds verification link and delegates to client`() {
-        emailService.sendArtistVerificationEmail("user@example.com", "abc123")
+        emailService.sendArtistVerificationEmail("user@example.com", "Test Artist", "abc123")
 
         verify(resendEmailClient).sendEmail(
             "user@example.com",
-            "verify-artist-email",
-            mapOf("LINK" to "http://localhost:8080/auth/verify?token=abc123")
+            "verify-artist",
+            mapOf(
+                "LINK" to "http://localhost:8080/auth/verify?token=abc123",
+                "ARTIST_NAME" to "Test Artist"
+            )
+        )
+    }
+
+    @Test
+    fun `sendPasswordResetEmail builds reset link and delegates to client`() {
+        emailService.sendPasswordResetEmail("user@example.com", "Test Artist", "reset-token-123")
+
+        verify(resendEmailClient).sendEmail(
+            "user@example.com",
+            "reset-password",
+            mapOf(
+                "LINK" to "http://localhost:8080/auth/reset-password?token=reset-token-123",
+                "ARTIST_NAME" to "Test Artist"
+            )
         )
     }
 
@@ -46,7 +63,7 @@ class EmailServiceImplTest {
 
         verify(resendEmailClient).sendEmail(
             "client@test.com",
-            "verify-appointment-email",
+            "verify-appointment",
             mapOf(
                 "LINK" to "http://localhost:8080/appointment/verify?appointmentId=${appointment.id}",
                 "ARTIST_NAME" to "Test Artist",

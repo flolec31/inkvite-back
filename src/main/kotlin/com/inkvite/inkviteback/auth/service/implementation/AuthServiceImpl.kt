@@ -4,10 +4,14 @@ import com.inkvite.inkviteback.artist.exception.SlugAlreadyTakenException
 import com.inkvite.inkviteback.artist.exception.TattooArtistAlreadyExistsException
 import com.inkvite.inkviteback.artist.service.TattooArtistService
 import com.inkvite.inkviteback.auth.dto.LoginResponseDto
+import com.inkvite.inkviteback.auth.dto.ResetPasswordRequestDto
+import com.inkvite.inkviteback.auth.entity.PasswordResetToken
 import com.inkvite.inkviteback.auth.entity.RefreshToken
 import com.inkvite.inkviteback.auth.entity.VerificationToken
 import com.inkvite.inkviteback.auth.event.ArtistVerificationEmailRequested
+import com.inkvite.inkviteback.auth.event.PasswordResetEmailRequested
 import com.inkvite.inkviteback.auth.exception.*
+import com.inkvite.inkviteback.auth.repository.PasswordResetTokenRepository
 import com.inkvite.inkviteback.auth.repository.RefreshTokenRepository
 import com.inkvite.inkviteback.auth.repository.VerificationTokenRepository
 import com.inkvite.inkviteback.auth.service.AuthService
@@ -25,6 +29,7 @@ import java.util.*
 class AuthServiceImpl(
     private val eventPublisher: ApplicationEventPublisher,
     private val tokenRepository: VerificationTokenRepository,
+    private val passwordResetTokenRepository: PasswordResetTokenRepository,
     private val tattooArtistService: TattooArtistService,
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService,
@@ -105,5 +110,29 @@ class AuthServiceImpl(
     override fun logout(refreshToken: String) {
         val tokenUUID = runCatching { UUID.fromString(refreshToken) }.getOrElse { return }
         refreshTokenRepository.findById(tokenUUID).ifPresent { refreshTokenRepository.delete(it) }
+    }
+
+    override fun forgotPassword(email: String) {
+        val artist = tattooArtistService.findByEmail(email)?.takeIf { it.activatedAt != null } ?: return
+        passwordResetTokenRepository.findByTattooArtistId(artist.id)?.let { passwordResetTokenRepository.delete(it) }
+        val resetToken = PasswordResetToken(tattooArtistId = artist.id)
+        val token = passwordResetTokenRepository.save(resetToken).token
+        eventPublisher.publishEvent(PasswordResetEmailRequested(artist.email, artist.artistName, token))
+    }
+
+    // noRollbackFor: TokenExpiredException must not roll back the transaction so the deletion below persists.
+    @Transactional(noRollbackFor = [TokenExpiredException::class])
+    override fun resetPassword(request: ResetPasswordRequestDto): LoginResponseDto {
+        val resetToken = passwordResetTokenRepository.findById(request.token).orElse(null)
+            ?: throw TokenNotFoundException()
+        if (resetToken.expiresAt.isBefore(Instant.now())) {
+            passwordResetTokenRepository.delete(resetToken)
+            throw TokenExpiredException()
+        }
+        passwordResetTokenRepository.delete(resetToken)
+        val encodedNewPassword = passwordEncoder.encode(request.newPassword)!!
+        tattooArtistService.updatePassword(resetToken.tattooArtistId, encodedNewPassword)
+        refreshTokenRepository.deleteAllByTattooArtistId(resetToken.tattooArtistId)
+        return login(resetToken.tattooArtistId)
     }
 }

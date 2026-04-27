@@ -38,4 +38,13 @@ class AuthController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun logout(@Valid @RequestBody request: LogoutRequestDto) =
         authService.logout(request.refreshToken)
+
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun forgotPassword(@RequestParam email: String) =
+        authService.forgotPassword(email)
+
+    @PostMapping("/reset-password")
+    fun resetPassword(@Valid @RequestBody request: ResetPasswordRequestDto): LoginResponseDto =
+        authService.resetPassword(request)
 }

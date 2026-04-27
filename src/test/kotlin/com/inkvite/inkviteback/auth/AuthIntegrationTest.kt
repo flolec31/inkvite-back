@@ -7,8 +7,11 @@ import com.inkvite.inkviteback.auth.dto.LoginRequestDto
 import com.inkvite.inkviteback.auth.dto.LogoutRequestDto
 import com.inkvite.inkviteback.auth.dto.RefreshRequestDto
 import com.inkvite.inkviteback.auth.dto.RegisterRequestDto
+import com.inkvite.inkviteback.auth.dto.ResetPasswordRequestDto
+import com.inkvite.inkviteback.auth.entity.PasswordResetToken
 import com.inkvite.inkviteback.auth.entity.RefreshToken
 import com.inkvite.inkviteback.auth.entity.VerificationToken
+import com.inkvite.inkviteback.auth.repository.PasswordResetTokenRepository
 import com.inkvite.inkviteback.auth.repository.RefreshTokenRepository
 import com.inkvite.inkviteback.auth.repository.VerificationTokenRepository
 import com.inkvite.inkviteback.auth.service.JwtService
@@ -36,6 +39,7 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
     @Autowired lateinit var mockMvc: MockMvc
     @Autowired lateinit var objectMapper: ObjectMapper
     @Autowired lateinit var tokenRepository: VerificationTokenRepository
+    @Autowired lateinit var passwordResetTokenRepository: PasswordResetTokenRepository
     @Autowired lateinit var artistRepository: TattooArtistRepository
     @Autowired lateinit var refreshTokenRepository: RefreshTokenRepository
     @Autowired lateinit var passwordEncoder: PasswordEncoder
@@ -45,6 +49,7 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
 
     @BeforeEach
     fun cleanup() {
+        passwordResetTokenRepository.deleteAll()
         tokenRepository.deleteAll()
         refreshTokenRepository.deleteAll()
         artistRepository.deleteAll()
@@ -66,7 +71,7 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
         assertThat(artist.slug).isEqualTo("john-doe")
 
         val token = tokenRepository.findAll().single()
-        verify(emailService).sendArtistVerificationEmail("artist@test.com", token.token)
+        verify(emailService).sendArtistVerificationEmail("artist@test.com", "John Doe", token.token)
     }
 
     @Test
@@ -142,7 +147,7 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
 
         val newToken = tokenRepository.findAll().single().token
         assertThat(newToken).isNotEqualTo(firstToken)
-        verify(emailService).sendArtistVerificationEmail("artist@test.com", newToken)
+        verify(emailService).sendArtistVerificationEmail("artist@test.com", "John Doe", newToken)
     }
 
     @Test
@@ -406,5 +411,121 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
         val body = objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "password123", "John Doe", "INVALID SLUG!"))
         mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isBadRequest)
+    }
+
+    // --- forgot-password ---
+
+    @Test
+    fun `forgot password with valid activated email sends reset email and saves token`() {
+        val artistId = UUID.randomUUID()
+        artistRepository.save(TattooArtist(id = artistId, email = "artist@test.com", password = "hash", artistName = "Test Artist", slug = "test-artist", registeredAt = Instant.now(), activatedAt = Instant.now()))
+
+        mockMvc.perform(post("/auth/forgot-password").param("email", "artist@test.com"))
+            .andExpect(status().isNoContent)
+
+        val token = passwordResetTokenRepository.findAll().single()
+        assertThat(token.tattooArtistId).isEqualTo(artistId)
+        verify(emailService).sendPasswordResetEmail("artist@test.com", "Test Artist", token.token)
+    }
+
+    @Test
+    fun `forgot password with unknown email returns 204 silently`() {
+        mockMvc.perform(post("/auth/forgot-password").param("email", "unknown@test.com"))
+            .andExpect(status().isNoContent)
+
+        assertThat(passwordResetTokenRepository.findAll()).isEmpty()
+        verifyNoInteractions(emailService)
+    }
+
+    @Test
+    fun `forgot password with unactivated account returns 204 silently`() {
+        val artistId = UUID.randomUUID()
+        artistRepository.save(TattooArtist(id = artistId, email = "artist@test.com", password = "hash", artistName = "Test Artist", slug = "test-artist", registeredAt = Instant.now(), activatedAt = null))
+
+        mockMvc.perform(post("/auth/forgot-password").param("email", "artist@test.com"))
+            .andExpect(status().isNoContent)
+
+        assertThat(passwordResetTokenRepository.findAll()).isEmpty()
+        verifyNoInteractions(emailService)
+    }
+
+    @Test
+    fun `forgot password replaces existing token when requested again`() {
+        val artistId = UUID.randomUUID()
+        artistRepository.save(TattooArtist(id = artistId, email = "artist@test.com", password = "hash", artistName = "Test Artist", slug = "test-artist", registeredAt = Instant.now(), activatedAt = Instant.now()))
+        val oldToken = PasswordResetToken(tattooArtistId = artistId)
+        passwordResetTokenRepository.save(oldToken)
+
+        mockMvc.perform(post("/auth/forgot-password").param("email", "artist@test.com"))
+            .andExpect(status().isNoContent)
+
+        val tokens = passwordResetTokenRepository.findAll()
+        assertThat(tokens).hasSize(1)
+        assertThat(tokens.single().token).isNotEqualTo(oldToken.token)
+    }
+
+    // --- reset-password ---
+
+    @Test
+    fun `reset password with valid token updates password, wipes refresh tokens, and returns new tokens`() {
+        val artistId = UUID.randomUUID()
+        artistRepository.save(TattooArtist(id = artistId, email = "artist@test.com", password = passwordEncoder.encode("oldPassword1")!!, artistName = "Test Artist", slug = "test-artist", registeredAt = Instant.now(), activatedAt = Instant.now()))
+        refreshTokenRepository.save(RefreshToken(tattooArtistId = artistId))
+        refreshTokenRepository.save(RefreshToken(tattooArtistId = artistId))
+        val resetToken = PasswordResetToken(tattooArtistId = artistId)
+        passwordResetTokenRepository.save(resetToken)
+
+        mockMvc.perform(
+            post("/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ResetPasswordRequestDto(resetToken.token, "newPassword1")))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.accessToken").isString)
+            .andExpect(jsonPath("$.refreshToken").isString)
+
+        assertThat(passwordResetTokenRepository.findAll()).isEmpty()
+        // old refresh tokens wiped; only the new one from auto-login remains
+        assertThat(refreshTokenRepository.findAll()).hasSize(1)
+        // can log in with new password
+        mockMvc.perform(
+            post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(LoginRequestDto("artist@test.com", "newPassword1")))
+        ).andExpect(status().isOk)
+    }
+
+    @Test
+    fun `reset password with unknown token returns 404`() {
+        mockMvc.perform(
+            post("/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ResetPasswordRequestDto("unknown-token", "newPassword1")))
+        ).andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `reset password with expired token returns 400 and deletes token`() {
+        val artistId = UUID.randomUUID()
+        artistRepository.save(TattooArtist(id = artistId, email = "artist@test.com", password = "hash", artistName = "Test Artist", slug = "test-artist", registeredAt = Instant.now(), activatedAt = Instant.now()))
+        val expiredToken = PasswordResetToken(tattooArtistId = artistId, expiresAt = Instant.now().minusSeconds(1))
+        passwordResetTokenRepository.save(expiredToken)
+
+        mockMvc.perform(
+            post("/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ResetPasswordRequestDto(expiredToken.token, "newPassword1")))
+        ).andExpect(status().isBadRequest)
+
+        assertThat(passwordResetTokenRepository.findAll()).isEmpty()
+    }
+
+    @Test
+    fun `reset password with too short password returns 400`() {
+        mockMvc.perform(
+            post("/auth/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ResetPasswordRequestDto("some-token", "short")))
+        ).andExpect(status().isBadRequest)
     }
 }
