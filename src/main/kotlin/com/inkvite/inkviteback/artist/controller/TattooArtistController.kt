@@ -9,6 +9,7 @@ import com.inkvite.inkviteback.artist.exception.SlugAlreadyTakenException
 import com.inkvite.inkviteback.artist.service.TattooArtistService
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Pattern
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.validation.annotation.Validated
@@ -27,7 +28,7 @@ class TattooArtistController(
     fun isSlugAvailable(
         @RequestParam @Pattern(regexp = "^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$") slug: String
     ): SlugAvailabilityResponseDto =
-        SlugAvailabilityResponseDto(available = !tattooArtistService.existsBySlug(slug))
+        SlugAvailabilityResponseDto(available = !tattooArtistService.isSlugTaken(slug))
 
     @PatchMapping("/me")
     fun updateProfile(
@@ -47,6 +48,13 @@ class TattooArtistController(
     ): ProfileResponseDto {
         val artistId = UUID.fromString(authentication.token.subject)
         return tattooArtistService.getProfile(artistId)
+    }
+
+    @DeleteMapping("/me/photo")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun deletePhoto(authentication: JwtAuthenticationToken) {
+        val artistId = UUID.fromString(authentication.token.subject)
+        tattooArtistService.deletePhoto(artistId)
     }
 
     @PostMapping("/me/photo", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])

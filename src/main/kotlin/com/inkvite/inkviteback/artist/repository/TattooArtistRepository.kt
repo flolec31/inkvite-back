@@ -12,6 +12,7 @@ interface TattooArtistRepository : JpaRepository<TattooArtist, UUID> {
     fun findByEmail(email: String): TattooArtist?
     fun findByEmailAndActivatedAtIsNull(email: String): TattooArtist?
     fun findBySlug(slug: String): Optional<TattooArtist>
-    fun existsBySlug(slug: String): Boolean
-    fun existsBySlugAndIdNot(slug: String, id: UUID): Boolean
+    fun findBySlugAndActivatedAtIsNull(slug: String): TattooArtist?
+    fun existsBySlugAndActivatedAtIsNotNull(slug: String): Boolean
+    fun existsBySlugAndIdNotAndActivatedAtIsNotNull(slug: String, id: UUID): Boolean
 }

@@ -8,6 +8,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.S3Configuration
@@ -55,6 +56,15 @@ class S3StorageServiceImpl(
             RequestBody.fromBytes(bytes)
         )
         return getSignedUrl(key)
+    }
+
+    override fun delete(key: String) {
+        client.deleteObject(
+            DeleteObjectRequest.builder()
+                .bucket(config.bucket)
+                .key(key)
+                .build()
+        )
     }
 
     override fun getSignedUrl(key: String): String =

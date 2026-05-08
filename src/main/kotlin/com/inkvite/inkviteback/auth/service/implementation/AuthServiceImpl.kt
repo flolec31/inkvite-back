@@ -45,7 +45,11 @@ class AuthServiceImpl(
             tokenRepository.findByTattooArtistId(unverified.id)?.let { tokenRepository.delete(it) }
             tattooArtistService.delete(unverified.id)
         }
-        if (tattooArtistService.existsBySlug(slug)) throw SlugAlreadyTakenException()
+        if (tattooArtistService.isSlugTaken(slug)) throw SlugAlreadyTakenException()
+        tattooArtistService.findUnactivatedBySlug(slug)?.let { unverified ->
+            tokenRepository.findByTattooArtistId(unverified.id)?.let { tokenRepository.delete(it) }
+            tattooArtistService.delete(unverified.id)
+        }
         val encodedPassword = passwordEncoder.encode(password)!!
         val artistId = try {
             tattooArtistService.register(email, encodedPassword, artistName, slug)

@@ -11,4 +11,9 @@ interface StorageService {
      * Returns a presigned GET URL (1h) for the object stored under [key].
      */
     fun getSignedUrl(key: String): String
+
+    /**
+     * Deletes the object stored under [key]. No-ops if the key does not exist.
+     */
+    fun delete(key: String)
 }

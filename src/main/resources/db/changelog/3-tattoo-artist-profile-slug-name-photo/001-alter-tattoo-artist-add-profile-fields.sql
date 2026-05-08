@@ -6,8 +6,7 @@ ALTER TABLE tattoo_artist
     ADD COLUMN slug              VARCHAR(30)  NOT NULL DEFAULT '',
     ADD COLUMN profile_photo_key VARCHAR(500);
 
-ALTER TABLE tattoo_artist
-    ADD CONSTRAINT uq_tattoo_artist_slug UNIQUE (slug);
+CREATE UNIQUE INDEX uq_tattoo_artist_slug_activated ON tattoo_artist (slug) WHERE activated_at IS NOT NULL;
 
 ALTER TABLE tattoo_artist
     ALTER COLUMN artist_name DROP DEFAULT,
