@@ -42,6 +42,12 @@ class EmailServiceImpl(
         resendEmailClient.sendEmail(to, "reset-password", variables)
     }
 
+    override fun sendPasswordChangedEmail(to: String, artistName: String) {
+        logger.debug("Sending password changed email to: $to")
+        val variables = mapOf("ARTIST_NAME" to artistName)
+        resendEmailClient.sendEmail(to, "password-changed", variables)
+    }
+
     override fun sendAppointmentVerificationEmail(appointment: Appointment) {
         val to = appointment.client.email
         logger.debug("Sending appointment verification email to: $to")

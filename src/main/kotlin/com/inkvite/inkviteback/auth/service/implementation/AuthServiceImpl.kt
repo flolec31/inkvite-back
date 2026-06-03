@@ -1,6 +1,8 @@
 package com.inkvite.inkviteback.auth.service.implementation
 
 import com.inkvite.inkviteback.artist.exception.SlugAlreadyTakenException
+import com.inkvite.inkviteback.auth.dto.ChangePasswordRequestDto
+import com.inkvite.inkviteback.auth.event.PasswordChangedEmailRequested
 import com.inkvite.inkviteback.artist.exception.TattooArtistAlreadyExistsException
 import com.inkvite.inkviteback.artist.service.TattooArtistService
 import com.inkvite.inkviteback.auth.dto.LoginResponseDto
@@ -122,6 +124,16 @@ class AuthServiceImpl(
         val resetToken = PasswordResetToken(tattooArtistId = artist.id)
         val token = passwordResetTokenRepository.save(resetToken).token
         eventPublisher.publishEvent(PasswordResetEmailRequested(artist.email, artist.artistName, token))
+    }
+
+    override fun changePassword(artistId: UUID, request: ChangePasswordRequestDto): LoginResponseDto {
+        val artist = tattooArtistService.findById(artistId)
+        if (!passwordEncoder.matches(request.currentPassword, artist.password)) throw InvalidCredentialsException()
+        val encodedNewPassword = passwordEncoder.encode(request.newPassword)!!
+        tattooArtistService.updatePassword(artistId, encodedNewPassword)
+        refreshTokenRepository.deleteAllByTattooArtistId(artistId)
+        eventPublisher.publishEvent(PasswordChangedEmailRequested(artist.email, artist.artistName))
+        return login(artistId)
     }
 
     // noRollbackFor: TokenExpiredException must not roll back the transaction so the deletion below persists.
