@@ -4,7 +4,9 @@ import com.inkvite.inkviteback.auth.dto.*
 import com.inkvite.inkviteback.auth.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/auth")
@@ -47,4 +49,13 @@ class AuthController(
     @PostMapping("/reset-password")
     fun resetPassword(@Valid @RequestBody request: ResetPasswordRequestDto): LoginResponseDto =
         authService.resetPassword(request)
+
+    @PostMapping("/change-password")
+    fun changePassword(
+        @Valid @RequestBody request: ChangePasswordRequestDto,
+        authentication: JwtAuthenticationToken,
+    ): LoginResponseDto {
+        val artistId = UUID.fromString(authentication.token.subject)
+        return authService.changePassword(artistId, request)
+    }
 }

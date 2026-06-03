@@ -34,6 +34,7 @@ class SecurityConfig(
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
+                it.requestMatchers(HttpMethod.POST, "/auth/change-password").authenticated()
                 it.requestMatchers("/auth/**").permitAll()
                 it.requestMatchers("/artists/slug-available").permitAll()
                 it.requestMatchers("/swagger-ui/**").permitAll()
