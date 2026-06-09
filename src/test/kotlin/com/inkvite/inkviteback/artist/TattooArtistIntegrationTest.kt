@@ -1,6 +1,7 @@
 package com.inkvite.inkviteback.artist
 
 import com.inkvite.inkviteback.AbstractIntegrationTest
+import com.inkvite.inkviteback.TestcontainersConfiguration
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
 import com.inkvite.inkviteback.auth.service.JwtService
@@ -8,12 +9,22 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.core.sync.RequestBody
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException
+import software.amazon.awssdk.services.s3.model.PutObjectRequest
+import java.net.URI
 import java.time.Instant
 import java.util.UUID
 
@@ -25,6 +36,30 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     lateinit var artistRepository: TattooArtistRepository
     @Autowired
     lateinit var jwtService: JwtService
+
+    @Value($$"${app.storage.bucket}")
+    lateinit var bucket: String
+
+    private val s3Client: S3Client by lazy {
+        val container = TestcontainersConfiguration.minioContainer
+        S3Client.builder()
+            .endpointOverride(URI.create(container.s3URL))
+            .region(Region.EU_WEST_3)
+            .credentialsProvider(
+                StaticCredentialsProvider.create(
+                    AwsBasicCredentials.create(container.userName, container.password)
+                )
+            )
+            .forcePathStyle(true)
+            .build()
+    }
+
+    private fun s3ObjectExists(key: String): Boolean = try {
+        s3Client.headObject(HeadObjectRequest.builder().bucket(bucket).key(key).build())
+        true
+    } catch (_: NoSuchKeyException) {
+        false
+    }
 
     @BeforeEach
     fun cleanup() {
@@ -63,6 +98,25 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
         mockMvc.perform(get("/artists/slug-available").param("slug", "taken-slug"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.available").value(false))
+    }
+
+    @Test
+    fun `slug-available returns true for slug taken only by unverified account`() {
+        artistRepository.save(
+            TattooArtist(
+                id = UUID.randomUUID(),
+                email = "unverified@test.com",
+                password = "hash",
+                artistName = "Unverified Artist",
+                slug = "unverified-slug",
+                registeredAt = Instant.now(),
+                activatedAt = null,
+            )
+        )
+
+        mockMvc.perform(get("/artists/slug-available").param("slug", "unverified-slug"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.available").value(true))
     }
 
     @Test
@@ -165,6 +219,32 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     }
 
     @Test
+    fun `update profile with slug taken only by unverified account succeeds`() {
+        artistRepository.save(
+            TattooArtist(
+                id = UUID.randomUUID(),
+                email = "unverified@test.com",
+                password = "hash",
+                artistName = "Unverified Artist",
+                slug = "unverified-slug",
+                registeredAt = Instant.now(),
+                activatedAt = null,
+            )
+        )
+        val artist = createActivatedArtist(email = "artist@test.com", slug = "my-slug")
+        val token = jwtService.generateAccessToken(artist.id)
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.patch("/artists/me")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content("""{"slug":"unverified-slug"}""")
+                .header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.slug").value("unverified-slug"))
+    }
+
+    @Test
     fun `update profile with taken slug returns 409`() {
         createActivatedArtist(email = "other@test.com", slug = "taken-slug")
         val artist = createActivatedArtist(email = "artist@test.com", slug = "my-slug")
@@ -236,5 +316,51 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
                 .header("Authorization", "Bearer $token")
         )
             .andExpect(status().isNotFound)
+    }
+
+    // --- DELETE /artists/me/photo ---
+
+    @Test
+    fun `delete photo clears profilePhotoKey and deletes object from storage`() {
+        val artist = createActivatedArtist()
+        val photoKey = "artists/${artist.id}/profile-photo"
+        artistRepository.save(artist.apply { profilePhotoKey = photoKey })
+        s3Client.putObject(
+            PutObjectRequest.builder().bucket(bucket).key(photoKey).build(),
+            RequestBody.fromBytes(ByteArray(10))
+        )
+        assertThat(s3ObjectExists(photoKey)).isTrue()
+        val token = jwtService.generateAccessToken(artist.id)
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.delete("/artists/me/photo")
+                .header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isNoContent)
+
+        val updated = artistRepository.findById(artist.id).get()
+        assertThat(updated.profilePhotoKey).isNull()
+        assertThat(s3ObjectExists(photoKey)).isFalse()
+    }
+
+    @Test
+    fun `delete photo when no photo is set returns 204`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.delete("/artists/me/photo")
+                .header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isNoContent)
+
+        val updated = artistRepository.findById(artist.id).get()
+        assertThat(updated.profilePhotoKey).isNull()
+    }
+
+    @Test
+    fun `delete photo without authentication returns 401`() {
+        mockMvc.perform(MockMvcRequestBuilders.delete("/artists/me/photo"))
+            .andExpect(status().isUnauthorized)
     }
 }

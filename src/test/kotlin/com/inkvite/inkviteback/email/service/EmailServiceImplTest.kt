@@ -35,7 +35,7 @@ class EmailServiceImplTest {
             "user@example.com",
             "verify-artist",
             mapOf(
-                "LINK" to "http://localhost:8080/auth/verify?token=abc123",
+                "LINK" to "http://localhost:8080/sign-up/verify?token=abc123",
                 "ARTIST_NAME" to "Test Artist"
             )
         )
@@ -49,7 +49,7 @@ class EmailServiceImplTest {
             "user@example.com",
             "reset-password",
             mapOf(
-                "LINK" to "http://localhost:8080/auth/reset-password?token=reset-token-123",
+                "LINK" to "http://localhost:8080/reset-password?token=reset-token-123",
                 "ARTIST_NAME" to "Test Artist"
             )
         )

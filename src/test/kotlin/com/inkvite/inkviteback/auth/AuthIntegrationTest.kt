@@ -561,29 +561,50 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `register with duplicate slug returns 409`() {
-        val body1 = objectMapper.writeValueAsString(
-            RegisterRequestDto(
-                "artist1@test.com",
-                "password123",
-                "John Doe",
-                "john-doe"
+    fun `register with slug of verified account returns 409`() {
+        artistRepository.save(
+            TattooArtist(
+                id = UUID.randomUUID(),
+                email = "artist1@test.com",
+                password = "hash",
+                artistName = "John Doe",
+                slug = "john-doe",
+                registeredAt = Instant.now(),
+                activatedAt = Instant.now(),
             )
         )
-        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body1))
-            .andExpect(status().isNoContent)
 
-        val body2 = objectMapper.writeValueAsString(
-            RegisterRequestDto(
-                "artist2@test.com",
-                "password123",
-                "Jane Doe",
-                "john-doe"
-            )
+        val body = objectMapper.writeValueAsString(
+            RegisterRequestDto("artist2@test.com", "password123", "Jane Doe", "john-doe")
         )
-        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body2))
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isConflict)
             .andExpect(jsonPath("$.error").value("This slug is already taken"))
+    }
+
+    @Test
+    fun `register with slug of unverified account succeeds and evicts that account`() {
+        artistRepository.save(
+            TattooArtist(
+                id = UUID.randomUUID(),
+                email = "artist1@test.com",
+                password = "hash",
+                artistName = "John Doe",
+                slug = "john-doe",
+                registeredAt = Instant.now(),
+                activatedAt = null,
+            )
+        )
+
+        val body = objectMapper.writeValueAsString(
+            RegisterRequestDto("artist2@test.com", "password123", "Jane Doe", "john-doe")
+        )
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isNoContent)
+
+        val artists = artistRepository.findAll()
+        assertThat(artists).hasSize(1)
+        assertThat(artists.single().email).isEqualTo("artist2@test.com")
     }
 
     @Test

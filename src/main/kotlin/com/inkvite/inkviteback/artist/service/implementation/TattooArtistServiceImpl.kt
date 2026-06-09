@@ -44,15 +44,18 @@ class TattooArtistServiceImpl(
     override fun findUnactivatedByEmail(email: String): TattooArtist? =
         repository.findByEmailAndActivatedAtIsNull(email)
 
+    override fun findUnactivatedBySlug(slug: String): TattooArtist? =
+        repository.findBySlugAndActivatedAtIsNull(slug)
+
     override fun findByEmail(email: String): TattooArtist? = repository.findByEmail(email)
 
     override fun findBySlug(slug: String): TattooArtist =
         repository.findBySlug(slug).orElseThrow { TattooArtistNotFoundException() }
 
-    override fun existsBySlug(slug: String): Boolean = repository.existsBySlug(slug)
+    override fun isSlugTaken(slug: String): Boolean = repository.existsBySlugAndActivatedAtIsNotNull(slug)
 
     override fun existsBySlugAndIdNot(slug: String, artistId: UUID): Boolean =
-        repository.existsBySlugAndIdNot(slug, artistId)
+        repository.existsBySlugAndIdNotAndActivatedAtIsNotNull(slug, artistId)
 
     override fun findById(artistId: UUID): TattooArtist =
         repository.findById(artistId).orElseThrow { TattooArtistNotFoundException() }
@@ -95,6 +98,17 @@ class TattooArtistServiceImpl(
     override fun delete(artistId: UUID) {
         repository.deleteById(artistId)
         logger.info("Deleted tattoo artist: {}", artistId)
+    }
+
+    @Transactional
+    override fun deletePhoto(artistId: UUID) {
+        val artist = findById(artistId)
+        artist.profilePhotoKey?.let { key ->
+            storageService.delete(key)
+            artist.profilePhotoKey = null
+            repository.save(artist)
+        }
+        logger.info("Photo deleted for tattoo artist: {}", artist.email)
     }
 
     @Transactional

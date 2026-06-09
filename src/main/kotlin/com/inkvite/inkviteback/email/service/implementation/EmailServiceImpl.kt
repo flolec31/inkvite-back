@@ -19,7 +19,7 @@ class EmailServiceImpl(
     override fun sendArtistVerificationEmail(to: String, artistName: String, token: String) {
         logger.debug("Sending artist verification email to: $to")
         val link = UriComponentsBuilder.fromUriString(baseUrl)
-            .path("/auth/verify")
+            .path("/sign-up/verify")
             .queryParam("token", token)
             .toUriString()
         val variables = mapOf(
@@ -32,7 +32,7 @@ class EmailServiceImpl(
     override fun sendPasswordResetEmail(to: String, artistName: String, token: String) {
         logger.debug("Sending password reset email to: $to")
         val link = UriComponentsBuilder.fromUriString(baseUrl)
-            .path("/auth/reset-password")
+            .path("/reset-password")
             .queryParam("token", token)
             .toUriString()
         val variables = mapOf(

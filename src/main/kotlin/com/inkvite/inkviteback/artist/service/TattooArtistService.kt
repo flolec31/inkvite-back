@@ -9,13 +9,15 @@ interface TattooArtistService {
     fun register(email: String, encodedPassword: String, artistName: String, slug: String): UUID
     fun activate(artistId: UUID)
     fun findUnactivatedByEmail(email: String): TattooArtist?
+    fun findUnactivatedBySlug(slug: String): TattooArtist?
     fun findByEmail(email: String): TattooArtist?
     fun findBySlug(slug: String): TattooArtist
-    fun existsBySlug(slug: String): Boolean
+    fun isSlugTaken(slug: String): Boolean
     fun existsBySlugAndIdNot(slug: String, artistId: UUID): Boolean
     fun findById(artistId: UUID): TattooArtist
     fun updateProfile(artistId: UUID, artistName: String?, slug: String?): ProfileResponseDto
     fun updatePhoto(artistId: UUID, photo: MultipartFile): String
+    fun deletePhoto(artistId: UUID)
     fun getProfile(artistId: UUID): ProfileResponseDto
     fun updatePassword(artistId: UUID, encodedPassword: String)
     fun delete(artistId: UUID)

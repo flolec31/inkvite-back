@@ -9,6 +9,8 @@ resend:
 
 app:
   base-url: ${APP_BASE_URL:}
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:}
   jwt:
     secret: ${APP_JWT_SECRET}
     access-token-expiry: 900
