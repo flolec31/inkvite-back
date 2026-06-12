@@ -50,6 +50,10 @@ class TattooArtistController(
         return tattooArtistService.getProfile(artistId)
     }
 
+    @GetMapping("/{slug}")
+    fun getPublicProfile(@PathVariable slug: String): ProfileResponseDto =
+        tattooArtistService.getProfileBySlug(slug)
+
     @DeleteMapping("/me/photo")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun deletePhoto(authentication: JwtAuthenticationToken) {

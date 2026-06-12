@@ -86,6 +86,13 @@ class TattooArtistServiceImpl(
         return ProfileResponseDto(artist, profilePhotoUrl)
     }
 
+    override fun getProfileBySlug(slug: String): ProfileResponseDto {
+        val artist = repository.findBySlugAndActivatedAtIsNotNull(slug)
+            .orElseThrow { TattooArtistNotFoundException() }
+        val profilePhotoUrl = artist.profilePhotoKey?.let { storageService.getSignedUrl(it) }
+        return ProfileResponseDto(artist, profilePhotoUrl)
+    }
+
     @Transactional
     override fun updatePassword(artistId: UUID, encodedPassword: String) {
         val artist = findById(artistId)
