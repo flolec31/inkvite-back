@@ -65,7 +65,7 @@ class EmailServiceImplTest {
             "client@test.com",
             "verify-appointment",
             mapOf(
-                "LINK" to "http://localhost:8080/appointment/verify?appointmentId=${appointment.id}",
+                "LINK" to "http://localhost:8080/@test-artist/verify?appointmentId=${appointment.id}",
                 "ARTIST_NAME" to "Test Artist",
                 "CLIENT_FIRSTNAME" to "Jane"
             )

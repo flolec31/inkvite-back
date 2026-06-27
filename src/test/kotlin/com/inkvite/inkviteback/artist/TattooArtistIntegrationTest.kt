@@ -162,6 +162,20 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     }
 
     @Test
+    fun `upload photo exceeding 5mb returns 400`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.multipart("/artists/me/photo")
+                .file(MockMultipartFile("photo", "big.jpg", "image/jpeg", ByteArray(5 * 1024 * 1024 + 1)))
+                .header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error").value("Photo must not exceed 5 MB"))
+    }
+
+    @Test
     fun `upload photo without authentication returns 401`() {
         mockMvc.perform(
             MockMvcRequestBuilders.multipart("/artists/me/photo")

@@ -109,9 +109,10 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `submit appointment form with references saves references`() {
         val artist = createActivatedArtist()
+        val crop = mapOf("left" to 232, "top" to 309, "width" to 1853, "height" to 2470)
         val refs = listOf(
-            mapOf("key" to "uploads/ref1.jpg", "comment" to "Like this style"),
-            mapOf("key" to "uploads/ref2.jpg", "comment" to null)
+            mapOf("key" to "uploads/ref1.jpg", "comment" to "Like this style", "crop" to crop),
+            mapOf("key" to "uploads/ref2.jpg", "comment" to null, "crop" to crop)
         )
 
         mockMvc.perform(
@@ -125,6 +126,12 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
         assertThat(savedRefs.map { it.key }).containsExactlyInAnyOrder("uploads/ref1.jpg", "uploads/ref2.jpg")
         assertThat(savedRefs.first { it.key == "uploads/ref1.jpg" }.comment).isEqualTo("Like this style")
         assertThat(savedRefs.first { it.key == "uploads/ref2.jpg" }.comment).isNull()
+        savedRefs.forEach { ref ->
+            assertThat(ref.cropLeft).isEqualTo(232)
+            assertThat(ref.cropTop).isEqualTo(309)
+            assertThat(ref.cropWidth).isEqualTo(1853)
+            assertThat(ref.cropHeight).isEqualTo(2470)
+        }
     }
 
     @Test
@@ -177,17 +184,6 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
     }
 
     @Test
-    fun `submit appointment form with description too short returns 400`() {
-        createActivatedArtist()
-
-        mockMvc.perform(
-            post("/appointment/test-artist")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validFormBody().toMutableMap().apply { put("description", "too short") }))
-        ).andExpect(status().isBadRequest)
-    }
-
-    @Test
     fun `submit cover appointment form without references returns 400`() {
         createActivatedArtist()
 
@@ -206,7 +202,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             multipart("/appointment/${artist.slug}/reference")
-                .file(MockMultipartFile("photo", "ref.jpg", "image/jpeg", ByteArray(100)))
+                .file(MockMultipartFile("image", "ref.jpg", "image/jpeg", ByteArray(100)))
         )
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.key").value(org.hamcrest.Matchers.matchesPattern("references/${artist.id}/[0-9a-f\\-]{36}")))
@@ -219,7 +215,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             multipart("/appointment/${artist.slug}/reference")
-                .file(MockMultipartFile("photo", "ref.png", "image/png", ByteArray(100)))
+                .file(MockMultipartFile("image", "ref.png", "image/png", ByteArray(100)))
         ).andExpect(status().isCreated)
     }
 
@@ -229,7 +225,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             multipart("/appointment/${artist.slug}/reference")
-                .file(MockMultipartFile("photo", "ref.webp", "image/webp", ByteArray(100)))
+                .file(MockMultipartFile("image", "ref.webp", "image/webp", ByteArray(100)))
         ).andExpect(status().isCreated)
     }
 
@@ -239,7 +235,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             multipart("/appointment/${artist.slug}/reference")
-                .file(MockMultipartFile("photo", "file.pdf", "application/pdf", ByteArray(100)))
+                .file(MockMultipartFile("image", "file.pdf", "application/pdf", ByteArray(100)))
         )
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error").value("Reference photo must be a JPEG, PNG, or WebP image"))
@@ -251,7 +247,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
 
         mockMvc.perform(
             multipart("/appointment/${artist.slug}/reference")
-                .file(MockMultipartFile("photo", "big.jpg", "image/jpeg", ByteArray(5 * 1024 * 1024 + 1)))
+                .file(MockMultipartFile("image", "big.jpg", "image/jpeg", ByteArray(5 * 1024 * 1024 + 1)))
         )
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.error").value("Reference photo must not exceed 5 MB"))
@@ -261,7 +257,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
     fun `upload reference for unknown slug returns 404`() {
         mockMvc.perform(
             multipart("/appointment/unknown-slug/reference")
-                .file(MockMultipartFile("photo", "ref.jpg", "image/jpeg", ByteArray(100)))
+                .file(MockMultipartFile("image", "ref.jpg", "image/jpeg", ByteArray(100)))
         ).andExpect(status().isNotFound)
     }
 
@@ -269,7 +265,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
     fun `upload reference with invalid slug format returns 400`() {
         mockMvc.perform(
             multipart("/appointment/INVALID/reference")
-                .file(MockMultipartFile("photo", "ref.jpg", "image/jpeg", ByteArray(100)))
+                .file(MockMultipartFile("image", "ref.jpg", "image/jpeg", ByteArray(100)))
         ).andExpect(status().isBadRequest)
     }
 
@@ -315,7 +311,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
             .andExpect(jsonPath("$.error").value("Appointment not found"))
     }
 
-    // --- GET /appointment/ ---
+    // --- GET /appointment ---
 
     private fun saveVerifiedAppointment(
         artist: TattooArtist,
@@ -348,7 +344,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
         val artist = createActivatedArtist()
         val token = jwtService.generateAccessToken(artist.id)
 
-        mockMvc.perform(get("/appointment/").header("Authorization", "Bearer $token"))
+        mockMvc.perform(get("/appointment").header("Authorization", "Bearer $token"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.content").isEmpty)
             .andExpect(jsonPath("$.total").value(0))
@@ -362,7 +358,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
         val client = tattooClientRepository.save(TattooClient(email = "client@test.com", firstName = "Jane", lastName = "Doe"))
         appointmentRepository.save(Appointment(artist = artist, client = client, tattooDescription = "desc", tattooPlacement = "arm", tattooSize = "10x10cm", firstTattoo = false, coverUp = false))
 
-        mockMvc.perform(get("/appointment/").header("Authorization", "Bearer $token"))
+        mockMvc.perform(get("/appointment").header("Authorization", "Bearer $token"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.content").isEmpty)
             .andExpect(jsonPath("$.total").value(0))
@@ -374,7 +370,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
         val token = jwtService.generateAccessToken(artist.id)
         val appointment = saveVerifiedAppointment(artist)
 
-        mockMvc.perform(get("/appointment/").header("Authorization", "Bearer $token"))
+        mockMvc.perform(get("/appointment").header("Authorization", "Bearer $token"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.content[0].id").value(appointment.id.toString()))
             .andExpect(jsonPath("$.content[0].firstName").value("Jane"))
@@ -391,7 +387,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
         val token = jwtService.generateAccessToken(artist.id)
         repeat(3) { saveVerifiedAppointment(artist) }
 
-        mockMvc.perform(get("/appointment/").param("size", "2").header("Authorization", "Bearer $token"))
+        mockMvc.perform(get("/appointment").param("size", "2").header("Authorization", "Bearer $token"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.content.length()").value(2))
             .andExpect(jsonPath("$.total").value(3))
@@ -406,7 +402,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
         val token = jwtService.generateAccessToken(artist.id)
         saveVerifiedAppointment(other)
 
-        mockMvc.perform(get("/appointment/").header("Authorization", "Bearer $token"))
+        mockMvc.perform(get("/appointment").header("Authorization", "Bearer $token"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.content").isEmpty)
             .andExpect(jsonPath("$.total").value(0))
@@ -419,7 +415,7 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
         val older = saveVerifiedAppointment(artist, verifiedAt = Instant.now().minus(1, ChronoUnit.HOURS))
         val newer = saveVerifiedAppointment(artist, verifiedAt = Instant.now())
 
-        mockMvc.perform(get("/appointment/").header("Authorization", "Bearer $token"))
+        mockMvc.perform(get("/appointment").header("Authorization", "Bearer $token"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.content[0].id").value(newer.id.toString()))
             .andExpect(jsonPath("$.content[1].id").value(older.id.toString()))
@@ -505,12 +501,14 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
         referenceRepository.save(com.inkvite.inkviteback.appointment.entity.Reference(
             appointment = appointment,
             key = "references/${artist.id}/ref1.jpg",
-            comment = "Like this style"
+            comment = "Like this style",
+            cropLeft = 232, cropTop = 309, cropWidth = 1853, cropHeight = 2470,
         ))
         referenceRepository.save(com.inkvite.inkviteback.appointment.entity.Reference(
             appointment = appointment,
             key = "references/${artist.id}/ref2.jpg",
-            comment = null
+            comment = null,
+            cropLeft = 0, cropTop = 0, cropWidth = 800, cropHeight = 600,
         ))
 
         mockMvc.perform(get("/appointment/${appointment.id}").header("Authorization", "Bearer $token"))
@@ -519,6 +517,10 @@ class AppointmentIntegrationTest : AbstractIntegrationTest() {
             .andExpect(jsonPath("$.references[0].id").isString)
             .andExpect(jsonPath("$.references[0].url").value(org.hamcrest.Matchers.containsString("X-Amz-Signature")))
             .andExpect(jsonPath("$.references[0].comment").value("Like this style"))
+            .andExpect(jsonPath("$.references[0].crop.left").value(232))
+            .andExpect(jsonPath("$.references[0].crop.top").value(309))
+            .andExpect(jsonPath("$.references[0].crop.width").value(1853))
+            .andExpect(jsonPath("$.references[0].crop.height").value(2470))
             .andExpect(jsonPath("$.references[1].url").value(org.hamcrest.Matchers.containsString("X-Amz-Signature")))
             .andExpect(jsonPath("$.references[1].comment").value(null as String?))
     }

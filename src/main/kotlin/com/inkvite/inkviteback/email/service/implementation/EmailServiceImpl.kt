@@ -52,7 +52,7 @@ class EmailServiceImpl(
         val to = appointment.client.email
         logger.debug("Sending appointment verification email to: $to")
         val link = UriComponentsBuilder.fromUriString(baseUrl)
-            .path("/appointment/verify")
+            .path("/@${appointment.artist.slug}/verify")
             .queryParam("appointmentId", appointment.id)
             .toUriString()
         val variables = mapOf(

@@ -3,10 +3,14 @@
 --changeset flolec:003-create-reference
 CREATE TABLE reference
 (
-    id             UUID          NOT NULL,
-    appointment_id UUID          NOT NULL,
-    key            VARCHAR(1024) NOT NULL,
+    id             UUID             NOT NULL,
+    appointment_id UUID             NOT NULL,
+    key            VARCHAR(1024)    NOT NULL,
     comment        TEXT,
+    crop_left      INTEGER          NOT NULL,
+    crop_top       INTEGER          NOT NULL,
+    crop_width     INTEGER          NOT NULL,
+    crop_height    INTEGER          NOT NULL,
     CONSTRAINT pk_reference PRIMARY KEY (id),
     CONSTRAINT fk_reference_appointment FOREIGN KEY (appointment_id) REFERENCES appointment (id) ON DELETE CASCADE
 );
