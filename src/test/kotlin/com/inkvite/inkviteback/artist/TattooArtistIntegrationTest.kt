@@ -32,8 +32,10 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
 
     @Autowired
     lateinit var mockMvc: MockMvc
+
     @Autowired
     lateinit var artistRepository: TattooArtistRepository
+
     @Autowired
     lateinit var jwtService: JwtService
 
@@ -362,5 +364,42 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     fun `delete photo without authentication returns 401`() {
         mockMvc.perform(MockMvcRequestBuilders.delete("/artists/me/photo"))
             .andExpect(status().isUnauthorized)
+    }
+
+    // --- GET /artists/{slug} ---
+
+    @Test
+    fun `get public profile by slug returns artist name, slug, and null photo url when no photo is set`() {
+        createActivatedArtist(slug = "my-artist")
+
+        mockMvc.perform(get("/artists/my-artist"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.artistName").value("Test Artist"))
+            .andExpect(jsonPath("$.slug").value("my-artist"))
+            .andExpect(jsonPath("$.profilePhotoUrl").doesNotExist())
+    }
+
+    @Test
+    fun `get public profile by slug returns 404 for unknown slug`() {
+        mockMvc.perform(get("/artists/unknown-slug"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `get public profile by slug returns 404 for unverified artist`() {
+        artistRepository.save(
+            TattooArtist(
+                id = UUID.randomUUID(),
+                email = "unverified@test.com",
+                password = "hash",
+                artistName = "Unverified Artist",
+                slug = "unverified-slug",
+                registeredAt = Instant.now(),
+                activatedAt = null,
+            )
+        )
+
+        mockMvc.perform(get("/artists/unverified-slug"))
+            .andExpect(status().isNotFound)
     }
 }

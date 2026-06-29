@@ -53,7 +53,9 @@ class SecurityConfig(
             .authorizeHttpRequests {
                 it.requestMatchers(HttpMethod.POST, "/auth/change-password").authenticated()
                 it.requestMatchers("/auth/**").permitAll()
-                it.requestMatchers("/artists/slug-available").permitAll()
+                it.requestMatchers(HttpMethod.GET, "/artists/slug-available").permitAll()
+                it.requestMatchers(HttpMethod.GET, "/artists/me").authenticated()
+                it.requestMatchers(HttpMethod.GET, "/artists/{slug}").permitAll()
                 it.requestMatchers("/swagger-ui/**").permitAll()
                 it.requestMatchers("/v3/api-docs/**").permitAll()
                 it.requestMatchers(HttpMethod.POST, "/appointment/{slug}").permitAll()
