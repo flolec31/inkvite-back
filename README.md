@@ -59,36 +59,40 @@ Tests spin up Postgres and MinIO via Testcontainers automatically. `EmailService
 
 ## API overview
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/auth/register` | public | Register a tattoo artist |
-| GET | `/auth/verify` | public | Verify email address |
-| POST | `/auth/login` | public | Login, returns JWT + refresh token |
-| POST | `/auth/refresh` | public | Rotate refresh token |
-| POST | `/auth/logout` | public | Invalidate refresh token |
-| POST | `/auth/forgot-password` | public | Send password-reset email |
-| POST | `/auth/reset-password` | public | Reset password with token |
-| GET | `/artists/me` | JWT | Get own profile |
-| PATCH | `/artists/me` | JWT | Update profile |
-| POST | `/artists/me/photo` | JWT | Upload profile photo |
-| GET | `/artists/slug-available` | public | Check slug availability |
-| POST | `/appointment/{slug}` | public | Submit appointment request |
-| POST | `/appointment/{slug}/reference` | public | Upload reference photo |
-| GET | `/appointment/verify` | public | Verify appointment (client email link) |
-| GET | `/appointment/` | JWT | List own appointments (paginated) |
-| GET | `/appointment/{id}` | JWT | Get appointment details |
+| Method | Path                            | Auth   | Description                            |
+|--------|---------------------------------|--------|----------------------------------------|
+| POST   | `/auth/register`                | public | Register a tattoo artist               |
+| GET    | `/auth/verify`                  | public | Verify email address                   |
+| POST   | `/auth/resend-verification`     | public | Resend verification email              |
+| POST   | `/auth/login`                   | public | Login, returns JWT + refresh token     |
+| POST   | `/auth/refresh`                 | public | Rotate refresh token                   |
+| POST   | `/auth/logout`                  | public | Invalidate refresh token               |
+| POST   | `/auth/forgot-password`         | public | Send password-reset email              |
+| POST   | `/auth/reset-password`          | public | Reset password with token              |
+| POST   | `/auth/change-password`         | JWT    | Change own password                    |
+| GET    | `/artists/{slug}`               | public | Get artist public profile              |
+| GET    | `/artists/slug-available`       | public | Check slug availability                |
+| GET    | `/artists/me`                   | JWT    | Get own profile                        |
+| PATCH  | `/artists/me`                   | JWT    | Update profile                         |
+| POST   | `/artists/me/photo`             | JWT    | Upload profile photo                   |
+| DELETE | `/artists/me/photo`             | JWT    | Delete profile photo                   |
+| POST   | `/appointment/{slug}`           | public | Submit appointment request             |
+| POST   | `/appointment/{slug}/reference` | public | Upload reference photo                 |
+| GET    | `/appointment/verify`           | public | Verify appointment (client email link) |
+| GET    | `/appointment/`                 | JWT    | List own appointments (paginated)      |
+| GET    | `/appointment/{id}`             | JWT    | Get appointment details                |
 
 Swagger UI is disabled in production (`springdoc.swagger-ui.enabled: false`). Enable it locally by overriding in `application-local.yaml`.
 
 ## Environment variables
 
-| Variable | Description |
-|----------|-------------|
-| `APP_JWT_SECRET` | Base64-encoded HMAC-SHA256 secret (min 256 bits) |
-| `APP_BASE_URL` | Public base URL of the API (used in emails) |
-| `APP_EMAIL_FROM` | Sender address (default: `noreply@inkvite.me`) |
-| `RESEND_API_KEY` | Resend API key |
-| `APP_STORAGE_ENDPOINT` | S3/MinIO endpoint URL |
-| `APP_STORAGE_BUCKET` | Bucket name |
-| `APP_STORAGE_ACCESS_KEY` | Storage access key |
-| `APP_STORAGE_SECRET_KEY` | Storage secret key |
+| Variable                 | Description                                      |
+|--------------------------|--------------------------------------------------|
+| `APP_JWT_SECRET`         | Base64-encoded HMAC-SHA256 secret (min 256 bits) |
+| `APP_BASE_URL`           | Public base URL of the API (used in emails)      |
+| `APP_EMAIL_FROM`         | Sender address (default: `noreply@inkvite.me`)   |
+| `RESEND_API_KEY`         | Resend API key                                   |
+| `APP_STORAGE_ENDPOINT`   | S3/MinIO endpoint URL                            |
+| `APP_STORAGE_BUCKET`     | Bucket name                                      |
+| `APP_STORAGE_ACCESS_KEY` | Storage access key                               |
+| `APP_STORAGE_SECRET_KEY` | Storage secret key                               |

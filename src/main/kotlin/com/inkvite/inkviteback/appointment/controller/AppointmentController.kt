@@ -37,7 +37,7 @@ class AppointmentController(
     @ResponseStatus(HttpStatus.CREATED)
     fun uploadReference(
         @PathVariable @Pattern(regexp = "^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$") slug: String,
-        @RequestParam("photo") photo: MultipartFile
+        @RequestParam("image") photo: MultipartFile
     ): ReferenceUploadResponseDto = appointmentService.uploadReference(slug, photo)
 
     @GetMapping("/verify")
@@ -45,7 +45,7 @@ class AppointmentController(
     fun verify(@RequestParam appointmentId: UUID) =
         appointmentService.verify(appointmentId)
 
-    @GetMapping("/")
+    @GetMapping
     fun getAppointmentsList(
         authentication: JwtAuthenticationToken,
         @PageableDefault(size = 20, sort = ["verifiedAt"], direction = Sort.Direction.DESC) pageable: Pageable

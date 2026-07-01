@@ -13,7 +13,7 @@ data class AppointmentFormRequestDto(
     @field:NotBlank @field:Email val email: String,
     @field:NotBlank val firstName: String,
     @field:NotBlank val lastName: String,
-    @field:NotBlank @field:Size(min = 20) val description: String,
+    @field:NotBlank val description: String,
     @field:NotBlank val placement: String,
     @field:NotBlank val size: String,
     val firstTattoo: Boolean,

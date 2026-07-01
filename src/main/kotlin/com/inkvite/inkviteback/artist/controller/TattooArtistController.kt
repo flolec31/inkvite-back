@@ -5,6 +5,7 @@ import com.inkvite.inkviteback.artist.dto.ProfileResponseDto
 import com.inkvite.inkviteback.artist.dto.SlugAvailabilityResponseDto
 import com.inkvite.inkviteback.artist.dto.UpdateProfileRequestDto
 import com.inkvite.inkviteback.artist.exception.InvalidPhotoContentTypeException
+import com.inkvite.inkviteback.artist.exception.PhotoTooLargeException
 import com.inkvite.inkviteback.artist.exception.SlugAlreadyTakenException
 import com.inkvite.inkviteback.artist.service.TattooArtistService
 import jakarta.validation.Valid
@@ -68,6 +69,7 @@ class TattooArtistController(
     ): PhotoUploadResponseDto {
         val allowedTypes = setOf("image/jpeg", "image/png", "image/webp")
         if (photo.contentType !in allowedTypes) throw InvalidPhotoContentTypeException()
+        if (photo.size > 5 * 1024 * 1024) throw PhotoTooLargeException()
 
         val artistId = UUID.fromString(authentication.token.subject)
         val photoUrl = tattooArtistService.updatePhoto(artistId, photo)
