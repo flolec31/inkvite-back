@@ -14,6 +14,7 @@ CREATE TABLE appointment
     submitted_at       TIMESTAMPTZ  NOT NULL,
     verified_at        TIMESTAMPTZ,
     new                BOOLEAN      NOT NULL DEFAULT true,
+    archived           BOOLEAN      NOT NULL DEFAULT false,
     CONSTRAINT pk_appointment PRIMARY KEY (id),
     CONSTRAINT fk_appointment_artist FOREIGN KEY (artist_id) REFERENCES tattoo_artist (id),
     CONSTRAINT fk_appointment_client FOREIGN KEY (client_id) REFERENCES tattoo_client (id)

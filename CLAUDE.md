@@ -44,7 +44,7 @@ This is a Spring Boot application using Kotlin + Spring Boot 4 + Java 24 + Gradl
 
 **Package structure** (under `com.inkvite.inkviteback`):
 - `artist` — `TattooArtist` entity, repository, service, profile photo upload
-- `appointment` — `Appointment` entity, repository, service, controller; handles both public client submission and JWT-protected artist views
+- `appointment` — `Appointment` entity, repository; service and controller are each split in two by audience: `*Submission*` (public client form submission, reference upload, email verification) and `*Management*` (JWT-protected artist views: list/details, archive)
 - `auth` — registration/verification controllers, services, token entity, DTOs, events
 - `client` — `TattooClient` entity, repository, service (created implicitly on appointment submission)
 - `common` — global exception handler (`GlobalExceptionHandler`), shared pagination DTO

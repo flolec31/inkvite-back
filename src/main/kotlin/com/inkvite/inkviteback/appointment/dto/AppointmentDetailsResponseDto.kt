@@ -15,7 +15,8 @@ data class AppointmentDetailsResponseDto(
     val receivedAt: LocalDate,
     val references: List<ReferenceDetailsResponseDto>,
     val clientName: String,
-    val clientEmail: String
+    val new: Boolean,
+    val archived: Boolean
 ) {
     constructor(
         appointment: Appointment,
@@ -30,6 +31,7 @@ data class AppointmentDetailsResponseDto(
         receivedAt = LocalDate.ofInstant(appointment.verifiedAt, ZoneId.of("UTC")),
         references = references,
         clientName = appointment.client.getFullName(),
-        clientEmail = appointment.client.email
+        new = appointment.new,
+        archived = appointment.archived
     )
 }
