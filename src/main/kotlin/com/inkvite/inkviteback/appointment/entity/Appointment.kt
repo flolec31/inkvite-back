@@ -19,5 +19,6 @@ class Appointment(
     var coverUp: Boolean,
     var submittedAt: Instant = Instant.now(),
     var verifiedAt: Instant? = null,
-    var new: Boolean = true
+    var new: Boolean = true,
+    var archived: Boolean = false
 )

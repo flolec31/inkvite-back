@@ -3,7 +3,7 @@ package com.inkvite.inkviteback.appointment
 import com.inkvite.inkviteback.appointment.exception.InvalidReferenceContentTypeException
 import com.inkvite.inkviteback.appointment.exception.ReferenceTooLargeException
 import com.inkvite.inkviteback.appointment.exception.ReferenceUploadFailedException
-import com.inkvite.inkviteback.appointment.service.implementation.AppointmentServiceImpl
+import com.inkvite.inkviteback.appointment.service.implementation.AppointmentSubmissionServiceImpl
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.artist.service.TattooArtistService
 import com.inkvite.inkviteback.storage.service.StorageService
@@ -23,7 +23,7 @@ import java.time.Instant
 import java.util.*
 
 @ExtendWith(MockitoExtension::class)
-class AppointmentServiceImplTest {
+class AppointmentSubmissionServiceImplTest {
 
     @Mock
     private lateinit var tattooArtistService: TattooArtistService
@@ -31,11 +31,11 @@ class AppointmentServiceImplTest {
     @Mock
     private lateinit var storageService: StorageService
 
-    private lateinit var service: AppointmentServiceImpl
+    private lateinit var service: AppointmentSubmissionServiceImpl
 
     @BeforeEach
     fun setUp() {
-        service = AppointmentServiceImpl(
+        service = AppointmentSubmissionServiceImpl(
             mock(), tattooArtistService, mock(), storageService, mock(), mock()
         )
     }

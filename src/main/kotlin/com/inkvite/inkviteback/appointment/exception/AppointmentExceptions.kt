@@ -9,3 +9,6 @@ class ReferenceTooLargeException : RuntimeException("Reference photo must not ex
 class ReferenceUploadFailedException(cause: Throwable) : RuntimeException("Failed to upload reference photo", cause)
 
 class AppointmentBelongsToAnotherArtistException : RuntimeException("The requested appointment belongs to another artist")
+
+class AppointmentArchiveStateException(archived: Boolean) :
+    RuntimeException(if (archived) "Appointment is already archived" else "Appointment is not archived")

@@ -29,4 +29,8 @@ class AppointmentControllerAdvice : AbstractControllerAdvice() {
     @ExceptionHandler(AppointmentBelongsToAnotherArtistException::class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     fun handleAppointmentBelongsToAnotherArtist(e: AppointmentBelongsToAnotherArtistException) = handleException(e)
+
+    @ExceptionHandler(AppointmentArchiveStateException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handleAppointmentArchiveState(e: AppointmentArchiveStateException) = handleException(e)
 }
