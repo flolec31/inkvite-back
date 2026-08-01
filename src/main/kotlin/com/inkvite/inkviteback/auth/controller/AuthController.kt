@@ -17,7 +17,7 @@ class AuthController(
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun register(@Valid @RequestBody request: RegisterRequestDto) =
-        authService.register(request.email, request.password, request.artistName, request.slug)
+        authService.register(request)
 
     @GetMapping("/verify")
     fun verify(@RequestParam token: String): LoginResponseDto =

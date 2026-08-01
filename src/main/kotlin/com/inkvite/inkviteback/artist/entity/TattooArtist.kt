@@ -14,6 +14,8 @@ class TattooArtist(
     var password: String,
     var artistName: String,
     var slug: String,
+    var city: String,
+    var countryCode: String,
     var registeredAt: Instant,
     var activatedAt: Instant? = null,
     var profilePhotoKey: String? = null,

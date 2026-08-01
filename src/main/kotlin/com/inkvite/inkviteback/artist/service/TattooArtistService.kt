@@ -1,12 +1,14 @@
 package com.inkvite.inkviteback.artist.service
 
 import com.inkvite.inkviteback.artist.dto.ProfileResponseDto
+import com.inkvite.inkviteback.artist.dto.UpdateProfileRequestDto
 import com.inkvite.inkviteback.artist.entity.TattooArtist
+import com.inkvite.inkviteback.artist.model.RegisterRequestModel
 import org.springframework.web.multipart.MultipartFile
 import java.util.*
 
 interface TattooArtistService {
-    fun register(email: String, encodedPassword: String, artistName: String, slug: String): UUID
+    fun register(request: RegisterRequestModel): UUID
     fun activate(artistId: UUID)
     fun findUnactivatedByEmail(email: String): TattooArtist?
     fun findUnactivatedBySlug(slug: String): TattooArtist?
@@ -15,7 +17,7 @@ interface TattooArtistService {
     fun isSlugTaken(slug: String): Boolean
     fun existsBySlugAndIdNot(slug: String, artistId: UUID): Boolean
     fun findById(artistId: UUID): TattooArtist
-    fun updateProfile(artistId: UUID, artistName: String?, slug: String?): ProfileResponseDto
+    fun updateProfile(artistId: UUID, request: UpdateProfileRequestDto): ProfileResponseDto
     fun updatePhoto(artistId: UUID, photo: MultipartFile): String
     fun deletePhoto(artistId: UUID)
     fun getProfile(artistId: UUID): ProfileResponseDto

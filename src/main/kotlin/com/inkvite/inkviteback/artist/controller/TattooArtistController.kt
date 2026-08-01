@@ -40,7 +40,7 @@ class TattooArtistController(
         if (request.slug != null && tattooArtistService.existsBySlugAndIdNot(request.slug, artistId)) {
             throw SlugAlreadyTakenException()
         }
-        return tattooArtistService.updateProfile(artistId, request.artistName, request.slug)
+        return tattooArtistService.updateProfile(artistId, request)
     }
 
     @GetMapping("/me")
