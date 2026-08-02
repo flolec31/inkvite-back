@@ -71,6 +71,8 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     private fun createActivatedArtist(
         email: String = "artist@test.com",
         slug: String = "test-artist",
+        city: String = "Test City",
+        countryCode: String = "FR",
     ): TattooArtist {
         val artist = TattooArtist(
             id = UUID.randomUUID(),
@@ -78,6 +80,8 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
             password = "hashed",
             artistName = "Test Artist",
             slug = slug,
+            city = city,
+            countryCode = countryCode,
             registeredAt = Instant.now(),
             activatedAt = Instant.now(),
         )
@@ -111,6 +115,8 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "Unverified Artist",
                 slug = "unverified-slug",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = null,
             )
@@ -235,6 +241,37 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     }
 
     @Test
+    fun `update profile with new city and country code succeeds`() {
+        val artist = createActivatedArtist(city = "Paris", countryCode = "FR")
+        val token = jwtService.generateAccessToken(artist.id)
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.patch("/artists/me")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content("""{"city":"Berlin","countryCode":"DE"}""")
+                .header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.city").value("Berlin"))
+            .andExpect(jsonPath("$.countryCode").value("DE"))
+            .andExpect(jsonPath("$.artistName").value("Test Artist"))
+    }
+
+    @Test
+    fun `update profile with invalid country code format returns 400`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.patch("/artists/me")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content("""{"countryCode":"Germany"}""")
+                .header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
     fun `update profile with slug taken only by unverified account succeeds`() {
         artistRepository.save(
             TattooArtist(
@@ -243,6 +280,8 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "Unverified Artist",
                 slug = "unverified-slug",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = null,
             )
@@ -383,13 +422,15 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     // --- GET /artists/{slug} ---
 
     @Test
-    fun `get public profile by slug returns artist name, slug, and null photo url when no photo is set`() {
-        createActivatedArtist(slug = "my-artist")
+    fun `get public profile by slug returns artist name, slug, city, country code, and null photo url when no photo is set`() {
+        createActivatedArtist(slug = "my-artist", city = "Paris", countryCode = "FR")
 
         mockMvc.perform(get("/artists/my-artist"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.artistName").value("Test Artist"))
             .andExpect(jsonPath("$.slug").value("my-artist"))
+            .andExpect(jsonPath("$.city").value("Paris"))
+            .andExpect(jsonPath("$.countryCode").value("FR"))
             .andExpect(jsonPath("$.profilePhotoUrl").doesNotExist())
     }
 
@@ -408,6 +449,8 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "Unverified Artist",
                 slug = "unverified-slug",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = null,
             )

@@ -51,6 +51,8 @@ class ChangePasswordIntegrationTest : AbstractIntegrationTest() {
                 password = passwordEncoder.encode("oldPassword1")!!,
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )

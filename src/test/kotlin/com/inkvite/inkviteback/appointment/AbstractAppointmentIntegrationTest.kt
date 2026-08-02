@@ -36,6 +36,8 @@ abstract class AbstractAppointmentIntegrationTest : AbstractIntegrationTest() {
                 password = "hashed",
                 artistName = "Test Artist",
                 slug = slug,
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )

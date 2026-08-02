@@ -1,9 +1,11 @@
 package com.inkvite.inkviteback.artist.service.implementation
 
 import com.inkvite.inkviteback.artist.dto.ProfileResponseDto
+import com.inkvite.inkviteback.artist.dto.UpdateProfileRequestDto
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.artist.exception.TattooArtistAlreadyExistsException
 import com.inkvite.inkviteback.artist.exception.TattooArtistNotFoundException
+import com.inkvite.inkviteback.artist.model.RegisterRequestModel
 import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
 import com.inkvite.inkviteback.artist.service.TattooArtistService
 import com.inkvite.inkviteback.storage.service.StorageService
@@ -24,20 +26,11 @@ class TattooArtistServiceImpl(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @Transactional
-    override fun register(email: String, encodedPassword: String, artistName: String, slug: String): UUID {
-        if (repository.existsByEmail(email)) throw TattooArtistAlreadyExistsException()
+    override fun register(request: RegisterRequestModel): UUID {
+        if (repository.existsByEmail(request.email)) throw TattooArtistAlreadyExistsException()
         val id = UUID.randomUUID()
-        repository.save(
-            TattooArtist(
-                id = id,
-                email = email,
-                password = encodedPassword,
-                artistName = artistName,
-                slug = slug,
-                registeredAt = Instant.now(),
-            )
-        )
-        logger.info("New tattoo artist registration: {}", email)
+        repository.save(request.toEntity(id))
+        logger.info("New tattoo artist registration: {}", request.email)
         return id
     }
 
@@ -70,10 +63,12 @@ class TattooArtistServiceImpl(
     }
 
     @Transactional
-    override fun updateProfile(artistId: UUID, artistName: String?, slug: String?): ProfileResponseDto {
+    override fun updateProfile(artistId: UUID, request: UpdateProfileRequestDto): ProfileResponseDto {
         val artist = findById(artistId)
-        artistName?.let { artist.artistName = it }
-        slug?.let { artist.slug = it }
+        request.artistName?.let { artist.artistName = it }
+        request.slug?.let { artist.slug = it }
+        request.city?.let { artist.city = it }
+        request.countryCode?.let { artist.countryCode = it }
         val updatedArtist = repository.save(artist)
         logger.info("Profile updated for tattoo artist: {}", artist.email)
         val profilePhotoUrl = updatedArtist.profilePhotoKey?.let { storageService.getSignedUrl(it) }

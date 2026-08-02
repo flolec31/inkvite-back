@@ -75,7 +75,9 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                             "artist@test.com",
                             "password123",
                             "John Doe",
-                            "john-doe"
+                            "john-doe",
+                            "Paris",
+                            "FR"
                         )
                     )
                 )
@@ -87,6 +89,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
         assertThat(artist.activatedAt).isNull()
         assertThat(artist.artistName).isEqualTo("John Doe")
         assertThat(artist.slug).isEqualTo("john-doe")
+        assertThat(artist.city).isEqualTo("Paris")
+        assertThat(artist.countryCode).isEqualTo("FR")
 
         val token = tokenRepository.findAll().single()
         verify(emailService).sendArtistVerificationEmail("artist@test.com", "John Doe", token.token)
@@ -102,6 +106,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "John Doe",
                 slug = "john-doe",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now()
             )
@@ -112,7 +118,9 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 "artist@test.com",
                 "password123",
                 "John Doe 2",
-                "john-doe-2"
+                "john-doe-2",
+                "Paris",
+                "FR"
             )
         )
         mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
@@ -130,7 +138,9 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                             "artist@test.com",
                             "password123",
                             "John Doe",
-                            "john-doe"
+                            "john-doe",
+                            "Paris",
+                            "FR"
                         )
                     )
                 )
@@ -147,7 +157,9 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                             "artist@test.com",
                             "newpassword123",
                             "Jane Doe",
-                            "jane-doe"
+                            "jane-doe",
+                            "Paris",
+                            "FR"
                         )
                     )
                 )
@@ -178,7 +190,9 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                             "artist@test.com",
                             "password123",
                             "John Doe",
-                            "john-doe"
+                            "john-doe",
+                            "Paris",
+                            "FR"
                         )
                     )
                 )
@@ -193,7 +207,9 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                             "artist@test.com",
                             "newpassword123",
                             "John Doe",
-                            "john-doe"
+                            "john-doe",
+                            "Paris",
+                            "FR"
                         )
                     )
                 )
@@ -214,7 +230,9 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                             "artist@test.com",
                             "password123",
                             "John Doe",
-                            "john-doe"
+                            "john-doe",
+                            "Paris",
+                            "FR"
                         )
                     )
                 )
@@ -241,6 +259,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now()
             )
         )
@@ -267,7 +287,9 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `register with invalid email returns 400`() {
         val body =
-            objectMapper.writeValueAsString(RegisterRequestDto("not-an-email", "password123", "John Doe", "john-doe"))
+            objectMapper.writeValueAsString(
+                RegisterRequestDto("not-an-email", "password123", "John Doe", "john-doe", "Paris", "FR")
+            )
         mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isBadRequest)
     }
@@ -275,7 +297,36 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `register with too short password returns 400`() {
         val body =
-            objectMapper.writeValueAsString(RegisterRequestDto("artist@test.com", "short", "John Doe", "john-doe"))
+            objectMapper.writeValueAsString(
+                RegisterRequestDto("artist@test.com", "short", "John Doe", "john-doe", "Paris", "FR")
+            )
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `register with blank city returns 400`() {
+        val body = objectMapper.writeValueAsString(
+            RegisterRequestDto("artist@test.com", "password123", "John Doe", "john-doe", "", "FR")
+        )
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `register with blank country code returns 400`() {
+        val body = objectMapper.writeValueAsString(
+            RegisterRequestDto("artist@test.com", "password123", "John Doe", "john-doe", "Paris", "")
+        )
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `register with invalid country code format returns 400`() {
+        val body = objectMapper.writeValueAsString(
+            RegisterRequestDto("artist@test.com", "password123", "John Doe", "john-doe", "Paris", "France")
+        )
         mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isBadRequest)
     }
@@ -291,7 +342,9 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                             "artist@test.com",
                             "password123",
                             "John Doe",
-                            "john-doe"
+                            "john-doe",
+                            "Paris",
+                            "FR"
                         )
                     )
                 )
@@ -324,6 +377,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now()
             )
@@ -345,6 +400,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = passwordEncoder.encode("password123")!!,
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )
@@ -372,6 +429,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = passwordEncoder.encode("password123")!!,
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )
@@ -407,6 +466,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )
@@ -440,6 +501,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )
@@ -482,6 +545,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )
@@ -546,6 +611,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = passwordEncoder.encode("password123")!!,
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = null,
             )
@@ -569,13 +636,15 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "John Doe",
                 slug = "john-doe",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now(),
             )
         )
 
         val body = objectMapper.writeValueAsString(
-            RegisterRequestDto("artist2@test.com", "password123", "Jane Doe", "john-doe")
+            RegisterRequestDto("artist2@test.com", "password123", "Jane Doe", "john-doe", "Paris", "FR")
         )
         mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isConflict)
@@ -591,13 +660,15 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "John Doe",
                 slug = "john-doe",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = null,
             )
         )
 
         val body = objectMapper.writeValueAsString(
-            RegisterRequestDto("artist2@test.com", "password123", "Jane Doe", "john-doe")
+            RegisterRequestDto("artist2@test.com", "password123", "Jane Doe", "john-doe", "Paris", "FR")
         )
         mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isNoContent)
@@ -614,7 +685,9 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 "artist@test.com",
                 "password123",
                 "John Doe",
-                "INVALID SLUG!"
+                "INVALID SLUG!",
+                "Paris",
+                "FR"
             )
         )
         mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
@@ -633,6 +706,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now()
             )
@@ -665,6 +740,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = null
             )
@@ -687,6 +764,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now()
             )
@@ -714,6 +793,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = passwordEncoder.encode("oldPassword1")!!,
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now()
             )
@@ -762,6 +843,8 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
                 password = "hash",
                 artistName = "Test Artist",
                 slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
                 registeredAt = Instant.now(),
                 activatedAt = Instant.now()
             )

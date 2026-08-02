@@ -1,16 +1,17 @@
 package com.inkvite.inkviteback.auth.service.implementation
 
 import com.inkvite.inkviteback.artist.exception.SlugAlreadyTakenException
-import com.inkvite.inkviteback.auth.dto.ChangePasswordRequestDto
-import com.inkvite.inkviteback.auth.event.PasswordChangedEmailRequested
 import com.inkvite.inkviteback.artist.exception.TattooArtistAlreadyExistsException
 import com.inkvite.inkviteback.artist.service.TattooArtistService
+import com.inkvite.inkviteback.auth.dto.ChangePasswordRequestDto
 import com.inkvite.inkviteback.auth.dto.LoginResponseDto
+import com.inkvite.inkviteback.auth.dto.RegisterRequestDto
 import com.inkvite.inkviteback.auth.dto.ResetPasswordRequestDto
 import com.inkvite.inkviteback.auth.entity.PasswordResetToken
 import com.inkvite.inkviteback.auth.entity.RefreshToken
 import com.inkvite.inkviteback.auth.entity.VerificationToken
 import com.inkvite.inkviteback.auth.event.ArtistVerificationEmailRequested
+import com.inkvite.inkviteback.auth.event.PasswordChangedEmailRequested
 import com.inkvite.inkviteback.auth.event.PasswordResetEmailRequested
 import com.inkvite.inkviteback.auth.exception.*
 import com.inkvite.inkviteback.auth.repository.PasswordResetTokenRepository
@@ -40,25 +41,25 @@ class AuthServiceImpl(
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override fun register(email: String, password: String, artistName: String, slug: String) {
-        tattooArtistService.findUnactivatedByEmail(email)?.let { unverified ->
+    override fun register(request: RegisterRequestDto) {
+        tattooArtistService.findUnactivatedByEmail(request.email)?.let { unverified ->
             tokenRepository.findByTattooArtistId(unverified.id)?.let { tokenRepository.delete(it) }
             tattooArtistService.delete(unverified.id)
         }
-        if (tattooArtistService.isSlugTaken(slug)) throw SlugAlreadyTakenException()
-        tattooArtistService.findUnactivatedBySlug(slug)?.let { unverified ->
+        if (tattooArtistService.isSlugTaken(request.slug)) throw SlugAlreadyTakenException()
+        tattooArtistService.findUnactivatedBySlug(request.slug)?.let { unverified ->
             tokenRepository.findByTattooArtistId(unverified.id)?.let { tokenRepository.delete(it) }
             tattooArtistService.delete(unverified.id)
         }
-        val encodedPassword = passwordEncoder.encode(password)!!
+        val encodedPassword = passwordEncoder.encode(request.password)!!
         val artistId = try {
-            tattooArtistService.register(email, encodedPassword, artistName, slug)
+            tattooArtistService.register(request.toModel(encodedPassword))
         } catch (_: TattooArtistAlreadyExistsException) {
             throw EmailAlreadyRegisteredException()
         }
         val verificationToken = VerificationToken(tattooArtistId = artistId)
         val token = tokenRepository.save(verificationToken).token
-        eventPublisher.publishEvent(ArtistVerificationEmailRequested(email, artistName, token))
+        eventPublisher.publishEvent(ArtistVerificationEmailRequested(request.email, request.artistName, token))
     }
 
     override fun resendVerification(email: String) {
