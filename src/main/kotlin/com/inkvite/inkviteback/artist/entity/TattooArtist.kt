@@ -19,4 +19,5 @@ class TattooArtist(
     var registeredAt: Instant,
     var activatedAt: Instant? = null,
     var profilePhotoKey: String? = null,
+    var agendaOpen: Boolean = true,
 )
