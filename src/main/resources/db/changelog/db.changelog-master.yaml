@@ -9,3 +9,5 @@ databaseChangeLog:
       path: db/changelog/4-appointment-form-request/
   - includeAll:
       path: db/changelog/18-forgot-password/
+  - includeAll:
+      path: db/changelog/19-support-message/

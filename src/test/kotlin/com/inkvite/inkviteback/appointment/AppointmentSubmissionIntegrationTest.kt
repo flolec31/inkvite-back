@@ -198,7 +198,7 @@ class AppointmentSubmissionIntegrationTest : AbstractAppointmentIntegrationTest(
                 .file(MockMultipartFile("image", "file.pdf", "application/pdf", ByteArray(100)))
         )
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error").value("Reference photo must be a JPEG, PNG, or WebP image"))
+            .andExpect(jsonPath("$.error").value("Image must be a JPEG, PNG, or WebP image"))
     }
 
     @Test
@@ -210,7 +210,7 @@ class AppointmentSubmissionIntegrationTest : AbstractAppointmentIntegrationTest(
                 .file(MockMultipartFile("image", "big.jpg", "image/jpeg", ByteArray(5 * 1024 * 1024 + 1)))
         )
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error").value("Reference photo must not exceed 5 MB"))
+            .andExpect(jsonPath("$.error").value("Image must not exceed 5 MB"))
     }
 
     @Test

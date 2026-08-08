@@ -83,6 +83,8 @@ Tests spin up Postgres and MinIO via Testcontainers automatically. `EmailService
 | GET    | `/appointment/{id}`             | JWT    | Get appointment details                |
 | POST   | `/appointment/{id}/archive`     | JWT    | Archive appointment                    |
 | POST   | `/appointment/{id}/unarchive`   | JWT    | Unarchive appointment                  |
+| POST   | `/support/screenshot`           | JWT    | Upload support message screenshot      |
+| POST   | `/support`                      | JWT    | Submit a support/contact message       |
 
 Swagger UI is disabled in production (`springdoc.swagger-ui.enabled: false`). Enable it locally by overriding in `application-local.yaml`.
 
