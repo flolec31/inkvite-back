@@ -69,6 +69,7 @@ class TattooArtistServiceImpl(
         request.slug?.let { artist.slug = it }
         request.city?.let { artist.city = it }
         request.countryCode?.let { artist.countryCode = it }
+        request.agendaOpen?.let { artist.agendaOpen = it }
         val updatedArtist = repository.save(artist)
         logger.info("Profile updated for tattoo artist: {}", artist.email)
         val profilePhotoUrl = updatedArtist.profilePhotoKey?.let { storageService.getSignedUrl(it) }

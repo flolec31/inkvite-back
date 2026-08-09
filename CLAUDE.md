@@ -50,7 +50,8 @@ This is a Spring Boot application using Kotlin + Spring Boot 4 + Java 24 + Gradl
 - `common` — global exception handler (`GlobalExceptionHandler`), shared pagination DTO
 - `email` — `EmailService`, Resend client, event listener
 - `security` — `SecurityConfig`, password encoder
-- `storage` — `StorageService` / `StorageServiceImpl` — S3-compatible file storage via AWS SDK v2
+- `storage` — `StorageService` / `StorageServiceImpl` — S3-compatible file storage via AWS SDK v2; `ImageUploadService` — shared validate-and-upload logic (content type/size checks, key prefixing) used by both appointment reference uploads and support screenshot uploads
+- `support` — `SupportMessage` entity/enum, repository, service, controller: artist-submitted contact/support messages (bug/help/idea/other), with optional screenshot via `storage.ImageUploadService`
 
 **Testing approach:**
 - Tests use Testcontainers for PostgreSQL **and MinIO** via `TestcontainersConfiguration` (in `src/test`), imported with `@Import(TestcontainersConfiguration::class)`. MinIO container is started and its S3 URL, access key, and secret key are injected via `DynamicPropertyRegistry`.

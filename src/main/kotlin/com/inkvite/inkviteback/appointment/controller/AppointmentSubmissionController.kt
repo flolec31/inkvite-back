@@ -1,8 +1,8 @@
 package com.inkvite.inkviteback.appointment.controller
 
 import com.inkvite.inkviteback.appointment.dto.AppointmentFormRequestDto
-import com.inkvite.inkviteback.appointment.dto.ReferenceUploadResponseDto
 import com.inkvite.inkviteback.appointment.service.AppointmentSubmissionService
+import com.inkvite.inkviteback.storage.dto.ImageUploadResponseDto
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Pattern
 import org.springframework.http.HttpStatus
@@ -31,7 +31,7 @@ class AppointmentSubmissionController(
     fun uploadReference(
         @PathVariable @Pattern(regexp = "^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$") slug: String,
         @RequestParam("image") photo: MultipartFile
-    ): ReferenceUploadResponseDto = appointmentSubmissionService.uploadReference(slug, photo)
+    ): ImageUploadResponseDto = appointmentSubmissionService.uploadReference(slug, photo)
 
     @GetMapping("/verify")
     @ResponseStatus(HttpStatus.NO_CONTENT)
