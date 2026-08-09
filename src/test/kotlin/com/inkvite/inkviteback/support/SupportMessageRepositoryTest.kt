@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 class SupportMessageRepositoryTest : AbstractIntegrationTest() {
@@ -42,7 +43,7 @@ class SupportMessageRepositoryTest : AbstractIntegrationTest() {
     @Test
     fun `saves and retrieves a support message without a screenshot`() {
         val artist = createArtist()
-        val createdAt = Instant.now()
+        val createdAt = Instant.now().truncatedTo(ChronoUnit.MICROS)
 
         val saved = supportMessageRepository.save(
             SupportMessage(
