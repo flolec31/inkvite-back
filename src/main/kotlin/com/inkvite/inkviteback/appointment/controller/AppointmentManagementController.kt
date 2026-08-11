@@ -61,4 +61,14 @@ class AppointmentManagementController(
         val artistId = UUID.fromString(authentication.token.subject)
         appointmentManagementService.unarchiveAppointment(artistId, appointmentId)
     }
+
+    @PostMapping("/{appointmentId}/mark-new")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun markAppointmentAsNew(
+        authentication: JwtAuthenticationToken,
+        @PathVariable appointmentId: UUID,
+    ) {
+        val artistId = UUID.fromString(authentication.token.subject)
+        appointmentManagementService.markAppointmentAsNew(artistId, appointmentId)
+    }
 }

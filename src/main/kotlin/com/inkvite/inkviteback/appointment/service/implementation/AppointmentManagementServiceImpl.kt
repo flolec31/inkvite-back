@@ -4,9 +4,11 @@ import com.inkvite.inkviteback.appointment.dto.AppointmentDetailsResponseDto
 import com.inkvite.inkviteback.appointment.dto.AppointmentItemResponseDto
 import com.inkvite.inkviteback.appointment.dto.ReferenceDetailsResponseDto
 import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.appointment.exception.AppointmentAlreadyNewException
 import com.inkvite.inkviteback.appointment.exception.AppointmentArchiveStateException
 import com.inkvite.inkviteback.appointment.exception.AppointmentBelongsToAnotherArtistException
 import com.inkvite.inkviteback.appointment.exception.AppointmentNotFoundException
+import com.inkvite.inkviteback.appointment.exception.CannotMarkArchivedAppointmentAsNewException
 import com.inkvite.inkviteback.appointment.repository.AppointmentRepository
 import com.inkvite.inkviteback.appointment.repository.ReferenceRepository
 import com.inkvite.inkviteback.appointment.service.AppointmentManagementService
@@ -51,6 +53,16 @@ class AppointmentManagementServiceImpl(
     @Transactional
     override fun unarchiveAppointment(artistId: UUID, appointmentId: UUID) =
         setArchived(artistId, appointmentId, archived = false)
+
+    @Transactional
+    override fun markAppointmentAsNew(artistId: UUID, appointmentId: UUID) {
+        val appointment = findOwnedAppointment(artistId, appointmentId)
+        if (appointment.archived) throw CannotMarkArchivedAppointmentAsNewException()
+        if (appointment.new) throw AppointmentAlreadyNewException()
+
+        appointment.new = true
+        appointmentRepository.save(appointment)
+    }
 
     private fun setArchived(artistId: UUID, appointmentId: UUID, archived: Boolean) {
         val appointment = findOwnedAppointment(artistId, appointmentId)

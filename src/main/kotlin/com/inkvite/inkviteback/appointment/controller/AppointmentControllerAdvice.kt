@@ -21,4 +21,12 @@ class AppointmentControllerAdvice : AbstractControllerAdvice() {
     @ExceptionHandler(AppointmentArchiveStateException::class)
     @ResponseStatus(HttpStatus.CONFLICT)
     fun handleAppointmentArchiveState(e: AppointmentArchiveStateException) = handleException(e)
+
+    @ExceptionHandler(AppointmentAlreadyNewException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handleAppointmentAlreadyNew(e: AppointmentAlreadyNewException) = handleException(e)
+
+    @ExceptionHandler(CannotMarkArchivedAppointmentAsNewException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handleCannotMarkArchivedAppointmentAsNew(e: CannotMarkArchivedAppointmentAsNewException) = handleException(e)
 }

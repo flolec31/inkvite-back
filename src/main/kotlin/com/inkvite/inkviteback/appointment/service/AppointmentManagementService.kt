@@ -11,4 +11,5 @@ interface AppointmentManagementService {
     fun getAppointmentDetails(artistId: UUID, appointmentId: UUID): AppointmentDetailsResponseDto
     fun archiveAppointment(artistId: UUID, appointmentId: UUID)
     fun unarchiveAppointment(artistId: UUID, appointmentId: UUID)
+    fun markAppointmentAsNew(artistId: UUID, appointmentId: UUID)
 }
