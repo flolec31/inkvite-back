@@ -83,6 +83,7 @@ Tests spin up Postgres and MinIO via Testcontainers automatically. `EmailService
 | GET    | `/appointment/{id}`             | JWT    | Get appointment details                |
 | POST   | `/appointment/{id}/archive`     | JWT    | Archive appointment                    |
 | POST   | `/appointment/{id}/unarchive`   | JWT    | Unarchive appointment                  |
+| POST   | `/appointment/{id}/mark-new`    | JWT    | Mark appointment as new                |
 | POST   | `/support/screenshot`           | JWT    | Upload support message screenshot      |
 | POST   | `/support`                      | JWT    | Submit a support/contact message       |
 

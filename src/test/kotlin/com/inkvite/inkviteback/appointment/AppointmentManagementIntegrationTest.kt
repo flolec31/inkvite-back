@@ -393,4 +393,78 @@ class AppointmentManagementIntegrationTest : AbstractAppointmentIntegrationTest(
         assertThat(persisted.archived).isFalse()
         assertThat(persisted.new).isFalse()
     }
+
+    // --- POST /appointment/{appointmentId}/mark-new ---
+
+    @Test
+    fun `mark appointment as new returns 401 when not authenticated`() {
+        mockMvc.perform(post("/appointment/${UUID.randomUUID()}/mark-new"))
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `mark appointment as new returns 404 when appointment does not exist`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+
+        mockMvc.perform(post("/appointment/${UUID.randomUUID()}/mark-new").header("Authorization", "Bearer $token"))
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.error").value("Appointment not found"))
+    }
+
+    @Test
+    fun `mark appointment as new returns 403 when appointment belongs to another artist`() {
+        val artist = createActivatedArtist(slug = "my-artist")
+        val other = createActivatedArtist(slug = "other-artist")
+        val token = jwtService.generateAccessToken(artist.id)
+        val appointment = saveVerifiedAppointment(other)
+        appointment.new = false
+        appointmentRepository.save(appointment)
+
+        mockMvc.perform(post("/appointment/${appointment.id}/mark-new").header("Authorization", "Bearer $token"))
+            .andExpect(status().isForbidden)
+            .andExpect(jsonPath("$.error").value("The requested appointment belongs to another artist"))
+    }
+
+    @Test
+    fun `mark appointment as new that is already new returns 409`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+        val appointment = saveVerifiedAppointment(artist)
+        assertThat(appointment.new).isTrue()
+
+        mockMvc.perform(post("/appointment/${appointment.id}/mark-new").header("Authorization", "Bearer $token"))
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error").value("Appointment is already marked as new"))
+    }
+
+    @Test
+    fun `mark appointment as new returns 409 when appointment is archived`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+        val appointment = saveVerifiedAppointment(artist)
+        appointment.new = false
+        appointment.archived = true
+        appointmentRepository.save(appointment)
+
+        mockMvc.perform(post("/appointment/${appointment.id}/mark-new").header("Authorization", "Bearer $token"))
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.error").value("Cannot mark an archived appointment as new"))
+    }
+
+    @Test
+    fun `mark appointment as new sets new flag without changing archived flag`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id)
+        val appointment = saveVerifiedAppointment(artist)
+        appointment.new = false
+        appointmentRepository.save(appointment)
+
+        mockMvc.perform(post("/appointment/${appointment.id}/mark-new").header("Authorization", "Bearer $token"))
+            .andExpect(status().isNoContent)
+
+        val persisted = appointmentRepository.findById(appointment.id).get()
+        assertThat(persisted.new).isTrue()
+        assertThat(persisted.archived).isFalse()
+    }
 }
