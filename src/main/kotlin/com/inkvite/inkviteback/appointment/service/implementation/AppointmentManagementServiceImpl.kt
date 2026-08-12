@@ -6,11 +6,10 @@ import com.inkvite.inkviteback.appointment.dto.ReferenceDetailsResponseDto
 import com.inkvite.inkviteback.appointment.entity.Appointment
 import com.inkvite.inkviteback.appointment.exception.AppointmentAlreadyNewException
 import com.inkvite.inkviteback.appointment.exception.AppointmentArchiveStateException
-import com.inkvite.inkviteback.appointment.exception.AppointmentBelongsToAnotherArtistException
-import com.inkvite.inkviteback.appointment.exception.AppointmentNotFoundException
 import com.inkvite.inkviteback.appointment.exception.CannotMarkArchivedAppointmentAsNewException
 import com.inkvite.inkviteback.appointment.repository.AppointmentRepository
 import com.inkvite.inkviteback.appointment.repository.ReferenceRepository
+import com.inkvite.inkviteback.appointment.service.AppointmentAccessService
 import com.inkvite.inkviteback.appointment.service.AppointmentManagementService
 import com.inkvite.inkviteback.storage.service.StorageService
 import org.springframework.data.domain.Page
@@ -24,7 +23,8 @@ import java.util.*
 class AppointmentManagementServiceImpl(
     private val storageService: StorageService,
     private val appointmentRepository: AppointmentRepository,
-    private val referenceRepository: ReferenceRepository
+    private val referenceRepository: ReferenceRepository,
+    private val appointmentAccessService: AppointmentAccessService,
 ) : AppointmentManagementService {
 
     override fun getAppointmentsOf(artistId: UUID, pageable: Pageable): Page<AppointmentItemResponseDto> =
@@ -36,7 +36,7 @@ class AppointmentManagementServiceImpl(
         artistId: UUID,
         appointmentId: UUID
     ): AppointmentDetailsResponseDto {
-        val appointment = findOwnedAppointment(artistId, appointmentId)
+        val appointment = appointmentAccessService.findOwnedAppointment(artistId, appointmentId)
 
         if (appointment.new) {
             appointment.new = false
@@ -56,7 +56,7 @@ class AppointmentManagementServiceImpl(
 
     @Transactional
     override fun markAppointmentAsNew(artistId: UUID, appointmentId: UUID) {
-        val appointment = findOwnedAppointment(artistId, appointmentId)
+        val appointment = appointmentAccessService.findOwnedAppointment(artistId, appointmentId)
         if (appointment.archived) throw CannotMarkArchivedAppointmentAsNewException()
         if (appointment.new) throw AppointmentAlreadyNewException()
 
@@ -65,18 +65,11 @@ class AppointmentManagementServiceImpl(
     }
 
     private fun setArchived(artistId: UUID, appointmentId: UUID, archived: Boolean) {
-        val appointment = findOwnedAppointment(artistId, appointmentId)
+        val appointment = appointmentAccessService.findOwnedAppointment(artistId, appointmentId)
         if (appointment.archived == archived) throw AppointmentArchiveStateException(archived)
 
         appointment.archived = archived
         appointmentRepository.save(appointment)
-    }
-
-    private fun findOwnedAppointment(artistId: UUID, appointmentId: UUID): Appointment {
-        val appointment = appointmentRepository.findByIdAndVerifiedAtNotNull(appointmentId)
-            .orElseThrow { AppointmentNotFoundException() }
-        if (appointment.artist.id != artistId) throw AppointmentBelongsToAnotherArtistException()
-        return appointment
     }
 
     private fun toDetailsResponse(appointment: Appointment): AppointmentDetailsResponseDto {
