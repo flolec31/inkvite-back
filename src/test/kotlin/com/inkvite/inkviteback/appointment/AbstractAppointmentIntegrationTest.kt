@@ -6,6 +6,7 @@ import com.inkvite.inkviteback.appointment.repository.ReferenceRepository
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
 import com.inkvite.inkviteback.client.repository.TattooClientRepository
+import com.inkvite.inkviteback.discussion.repository.MessageRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,10 +19,12 @@ abstract class AbstractAppointmentIntegrationTest : AbstractIntegrationTest() {
     @Autowired lateinit var appointmentRepository: AppointmentRepository
     @Autowired lateinit var tattooClientRepository: TattooClientRepository
     @Autowired lateinit var referenceRepository: ReferenceRepository
+    @Autowired lateinit var messageRepository: MessageRepository
 
     @BeforeEach
     @AfterEach
     fun cleanupAppointments() {
+        messageRepository.deleteAll()
         referenceRepository.deleteAll()
         appointmentRepository.deleteAll()
         tattooClientRepository.deleteAll()

@@ -48,6 +48,7 @@ This is a Spring Boot application using Kotlin + Spring Boot 4 + Java 24 + Gradl
 - `auth` — registration/verification controllers, services, token entity, DTOs, events
 - `client` — `TattooClient` entity, repository, service (created implicitly on appointment submission)
 - `common` — global exception handler (`GlobalExceptionHandler`), shared pagination DTO
+- `discussion` — `Message` entity/`MessageSender` enum, repository, service, controller: JWT-protected appointment-scoped message thread (`GET`/`POST /appointment/{appointmentId}/messages`), ownership enforced via `appointment.service.AppointmentAccessService`
 - `email` — `EmailService`, Resend client, event listener
 - `security` — `SecurityConfig`, password encoder
 - `storage` — `StorageService` / `StorageServiceImpl` — S3-compatible file storage via AWS SDK v2; `ImageUploadService` — shared validate-and-upload logic (content type/size checks, key prefixing) used by both appointment reference uploads and support screenshot uploads
