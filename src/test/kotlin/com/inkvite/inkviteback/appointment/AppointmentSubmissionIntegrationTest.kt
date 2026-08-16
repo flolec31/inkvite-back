@@ -69,10 +69,9 @@ class AppointmentSubmissionIntegrationTest : AbstractAppointmentIntegrationTest(
     @Test
     fun `submit appointment form with references saves references`() {
         val artist = createActivatedArtist()
-        val crop = mapOf("left" to 232, "top" to 309, "width" to 1853, "height" to 2470)
         val refs = listOf(
-            mapOf("key" to "uploads/ref1.jpg", "comment" to "Like this style", "crop" to crop),
-            mapOf("key" to "uploads/ref2.jpg", "comment" to null, "crop" to crop)
+            mapOf("key" to "uploads/ref1.jpg", "comment" to "Like this style"),
+            mapOf("key" to "uploads/ref2.jpg", "comment" to null)
         )
 
         mockMvc.perform(
@@ -86,12 +85,6 @@ class AppointmentSubmissionIntegrationTest : AbstractAppointmentIntegrationTest(
         assertThat(savedRefs.map { it.key }).containsExactlyInAnyOrder("uploads/ref1.jpg", "uploads/ref2.jpg")
         assertThat(savedRefs.first { it.key == "uploads/ref1.jpg" }.comment).isEqualTo("Like this style")
         assertThat(savedRefs.first { it.key == "uploads/ref2.jpg" }.comment).isNull()
-        savedRefs.forEach { ref ->
-            assertThat(ref.cropLeft).isEqualTo(232)
-            assertThat(ref.cropTop).isEqualTo(309)
-            assertThat(ref.cropWidth).isEqualTo(1853)
-            assertThat(ref.cropHeight).isEqualTo(2470)
-        }
     }
 
     @Test

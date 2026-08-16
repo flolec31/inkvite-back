@@ -12,7 +12,8 @@ class Message(
     @ManyToOne @JoinColumn(name = "appointment_id", nullable = false)
     var appointment: Appointment,
     @Enumerated(EnumType.STRING) var sender: MessageSender,
-    var content: String,
+    var content: String? = null,
+    var imageKey: String? = null,
     var sentAt: Instant = Instant.now(),
     var readAt: Instant? = null,
 )

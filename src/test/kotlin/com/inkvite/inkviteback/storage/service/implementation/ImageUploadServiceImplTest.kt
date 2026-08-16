@@ -3,6 +3,7 @@ package com.inkvite.inkviteback.storage.service.implementation
 import com.inkvite.inkviteback.storage.exception.ImageTooLargeException
 import com.inkvite.inkviteback.storage.exception.ImageUploadFailedException
 import com.inkvite.inkviteback.storage.exception.InvalidImageContentTypeException
+import com.inkvite.inkviteback.storage.ImageValidator
 import com.inkvite.inkviteback.storage.service.StorageService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -27,7 +28,7 @@ class ImageUploadServiceImplTest {
 
     @BeforeEach
     fun setUp() {
-        service = ImageUploadServiceImpl(storageService)
+        service = ImageUploadServiceImpl(storageService, ImageValidator())
     }
 
     private val artistId = UUID.randomUUID()

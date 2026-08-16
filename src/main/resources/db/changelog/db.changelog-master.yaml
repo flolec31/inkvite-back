@@ -13,3 +13,5 @@ databaseChangeLog:
       path: db/changelog/19-support-message/
   - includeAll:
       path: db/changelog/48-discussion-tab/
+  - includeAll:
+      path: db/changelog/50-sending-pictures-in-chat/

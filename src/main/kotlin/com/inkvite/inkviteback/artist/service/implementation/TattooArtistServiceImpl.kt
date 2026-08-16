@@ -8,6 +8,7 @@ import com.inkvite.inkviteback.artist.exception.TattooArtistNotFoundException
 import com.inkvite.inkviteback.artist.model.RegisterRequestModel
 import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
 import com.inkvite.inkviteback.artist.service.TattooArtistService
+import com.inkvite.inkviteback.storage.ImageValidator
 import com.inkvite.inkviteback.storage.service.StorageService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -20,7 +21,8 @@ import java.util.*
 @Transactional(readOnly = true)
 class TattooArtistServiceImpl(
     private val repository: TattooArtistRepository,
-    private val storageService: StorageService
+    private val storageService: StorageService,
+    private val imageValidator: ImageValidator,
 ) : TattooArtistService {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -116,6 +118,7 @@ class TattooArtistServiceImpl(
 
     @Transactional
     override fun updatePhoto(artistId: UUID, photo: MultipartFile): String {
+        imageValidator.validate(photo)
         val artist = findById(artistId)
         val photoKey = "artists/$artistId/profile-photo"
         artist.profilePhotoKey = photoKey
