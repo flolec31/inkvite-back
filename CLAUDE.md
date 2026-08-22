@@ -48,10 +48,10 @@ This is a Spring Boot application using Kotlin + Spring Boot 4 + Java 24 + Gradl
 - `auth` — registration/verification controllers, services, token entity, DTOs, events
 - `client` — `TattooClient` entity, repository, service (created implicitly on appointment submission)
 - `common` — global exception handler (`GlobalExceptionHandler`), shared pagination DTO
-- `discussion` — `Message` entity/`MessageSender` enum, repository, service, controller: JWT-protected appointment-scoped message thread (`GET`/`POST /appointment/{appointmentId}/messages`), ownership enforced via `appointment.service.AppointmentAccessService`
+- `discussion` — `Message` entity/`MessageSender` enum, repository, service, controller: JWT-protected appointment-scoped message thread (`GET`/`POST /appointment/{appointmentId}/messages`), ownership enforced via `appointment.service.AppointmentAccessService`. A message carries text, an image, or both (at least one required). Sending stays JSON (`{ content?, imageKey? }`); the image is uploaded first via `POST /appointment/{appointmentId}/messages/image` (multipart, field `image`) which returns a `messages/{artistId}/{uuid}` key. The service guards that a supplied `imageKey` is prefixed with the caller's own `messages/{artistId}/`. Image URLs are returned as 1h presigned URLs on read.
 - `email` — `EmailService`, Resend client, event listener
 - `security` — `SecurityConfig`, password encoder
-- `storage` — `StorageService` / `StorageServiceImpl` — S3-compatible file storage via AWS SDK v2; `ImageUploadService` — shared validate-and-upload logic (content type/size checks, key prefixing) used by both appointment reference uploads and support screenshot uploads
+- `storage` — `StorageService` / `StorageServiceImpl` — S3-compatible file storage via AWS SDK v2; `ImageValidator` — single source of truth for image validation (JPEG/PNG/WebP, max 5 MB), used by every image entry point (references, support screenshots, message images, and the artist profile photo in `TattooArtistServiceImpl`); `ImageUploadService` — shared validate-and-upload logic (delegates validation to `ImageValidator`, then key-prefixes and stores) used by appointment reference, support screenshot, and message image uploads (prefixes `references/`, `contact-screenshots/`, `messages/`)
 - `support` — `SupportMessage` entity/enum, repository, service, controller: artist-submitted contact/support messages (bug/help/idea/other), with optional screenshot via `storage.ImageUploadService`
 
 **Testing approach:**

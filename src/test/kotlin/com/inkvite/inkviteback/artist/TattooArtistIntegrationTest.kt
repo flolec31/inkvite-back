@@ -164,7 +164,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
                 .header("Authorization", "Bearer $token")
         )
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error").value("Photo must be a JPEG, PNG, or WebP image"))
+            .andExpect(jsonPath("$.error").value("Image must be a JPEG, PNG, or WebP image"))
     }
 
     @Test
@@ -178,7 +178,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
                 .header("Authorization", "Bearer $token")
         )
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error").value("Photo must not exceed 5 MB"))
+            .andExpect(jsonPath("$.error").value("Image must not exceed 5 MB"))
     }
 
     @Test

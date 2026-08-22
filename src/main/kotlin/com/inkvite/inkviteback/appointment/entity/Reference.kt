@@ -15,8 +15,4 @@ class Reference(
     var appointment: Appointment,
     var key: String,
     var comment: String? = null,
-    var cropLeft: Int = 0,
-    var cropTop: Int = 0,
-    var cropWidth: Int = 0,
-    var cropHeight: Int = 0,
 )

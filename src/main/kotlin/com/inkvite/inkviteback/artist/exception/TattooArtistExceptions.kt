@@ -4,8 +4,4 @@ class TattooArtistAlreadyExistsException : RuntimeException("A tattoo artist wit
 
 class SlugAlreadyTakenException : RuntimeException("This slug is already taken")
 
-class InvalidPhotoContentTypeException : RuntimeException("Photo must be a JPEG, PNG, or WebP image")
-
-class PhotoTooLargeException : RuntimeException("Photo must not exceed 5 MB")
-
 class TattooArtistNotFoundException : RuntimeException("Tattoo artist not found")

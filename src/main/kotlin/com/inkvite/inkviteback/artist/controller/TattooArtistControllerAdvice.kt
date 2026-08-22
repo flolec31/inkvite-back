@@ -1,7 +1,5 @@
 package com.inkvite.inkviteback.artist.controller
 
-import com.inkvite.inkviteback.artist.exception.InvalidPhotoContentTypeException
-import com.inkvite.inkviteback.artist.exception.PhotoTooLargeException
 import com.inkvite.inkviteback.artist.exception.SlugAlreadyTakenException
 import com.inkvite.inkviteback.artist.exception.TattooArtistNotFoundException
 import com.inkvite.inkviteback.common.AbstractControllerAdvice
@@ -16,14 +14,6 @@ class TattooArtistControllerAdvice : AbstractControllerAdvice() {
     @ExceptionHandler(SlugAlreadyTakenException::class)
     @ResponseStatus(HttpStatus.CONFLICT)
     fun handleSlugAlreadyTaken(e: SlugAlreadyTakenException) = handleException(e)
-
-    @ExceptionHandler(InvalidPhotoContentTypeException::class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleInvalidPhotoContentType(e: InvalidPhotoContentTypeException) = handleException(e)
-
-    @ExceptionHandler(PhotoTooLargeException::class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handlePhotoTooLarge(e: PhotoTooLargeException) = handleException(e)
 
     @ExceptionHandler(TattooArtistNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)

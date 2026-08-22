@@ -214,13 +214,11 @@ class AppointmentManagementIntegrationTest : AbstractAppointmentIntegrationTest(
             appointment = appointment,
             key = "references/${artist.id}/ref1.jpg",
             comment = "Like this style",
-            cropLeft = 232, cropTop = 309, cropWidth = 1853, cropHeight = 2470,
         ))
         referenceRepository.save(com.inkvite.inkviteback.appointment.entity.Reference(
             appointment = appointment,
             key = "references/${artist.id}/ref2.jpg",
             comment = null,
-            cropLeft = 0, cropTop = 0, cropWidth = 800, cropHeight = 600,
         ))
 
         mockMvc.perform(get("/appointment/${appointment.id}").header("Authorization", "Bearer $token"))
@@ -229,10 +227,6 @@ class AppointmentManagementIntegrationTest : AbstractAppointmentIntegrationTest(
             .andExpect(jsonPath("$.references[0].id").isString)
             .andExpect(jsonPath("$.references[0].url").value(org.hamcrest.Matchers.containsString("X-Amz-Signature")))
             .andExpect(jsonPath("$.references[0].comment").value("Like this style"))
-            .andExpect(jsonPath("$.references[0].crop.left").value(232))
-            .andExpect(jsonPath("$.references[0].crop.top").value(309))
-            .andExpect(jsonPath("$.references[0].crop.width").value(1853))
-            .andExpect(jsonPath("$.references[0].crop.height").value(2470))
             .andExpect(jsonPath("$.references[1].url").value(org.hamcrest.Matchers.containsString("X-Amz-Signature")))
             .andExpect(jsonPath("$.references[1].comment").value(null as String?))
     }
