@@ -15,3 +15,5 @@ databaseChangeLog:
       path: db/changelog/48-discussion-tab/
   - includeAll:
       path: db/changelog/50-sending-pictures-in-chat/
+  - includeAll:
+      path: db/changelog/52-color-and-styles/

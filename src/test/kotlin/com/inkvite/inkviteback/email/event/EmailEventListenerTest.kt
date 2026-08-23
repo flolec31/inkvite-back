@@ -1,6 +1,7 @@
 package com.inkvite.inkviteback.email.event
 
 import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.appointment.entity.TattooStyle
 import com.inkvite.inkviteback.appointment.event.AppointmentNotificationEmailRequested
 import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailRequested
 import com.inkvite.inkviteback.artist.entity.TattooArtist
@@ -85,7 +86,9 @@ class EmailEventListenerTest {
             tattooPlacement = "forearm",
             tattooSize = "10x10cm",
             firstTattoo = false,
-            coverUp = false
+            coverUp = false,
+            color = false,
+            style = TattooStyle.REALISM
         )
     }
 }

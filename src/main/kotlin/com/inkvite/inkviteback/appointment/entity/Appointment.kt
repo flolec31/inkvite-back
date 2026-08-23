@@ -17,6 +17,8 @@ class Appointment(
     var tattooSize: String,
     var firstTattoo: Boolean,
     var coverUp: Boolean,
+    var color: Boolean,
+    @Enumerated(EnumType.STRING) var style: TattooStyle,
     var submittedAt: Instant = Instant.now(),
     var verifiedAt: Instant? = null,
     var new: Boolean = true,
