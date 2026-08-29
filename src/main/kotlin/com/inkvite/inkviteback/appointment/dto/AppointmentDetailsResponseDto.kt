@@ -1,6 +1,7 @@
 package com.inkvite.inkviteback.appointment.dto
 
 import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.appointment.entity.TattooStyle
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.*
@@ -12,6 +13,8 @@ data class AppointmentDetailsResponseDto(
     val tattooSize: String,
     val firstTattoo: Boolean,
     val coverUp: Boolean,
+    val color: Boolean,
+    val style: TattooStyle,
     val receivedAt: LocalDate,
     val references: List<ReferenceDetailsResponseDto>,
     val clientName: String,
@@ -28,6 +31,8 @@ data class AppointmentDetailsResponseDto(
         tattooSize = appointment.tattooSize,
         firstTattoo = appointment.firstTattoo,
         coverUp = appointment.coverUp,
+        color = appointment.color,
+        style = appointment.style,
         receivedAt = LocalDate.ofInstant(appointment.verifiedAt, ZoneId.of("UTC")),
         references = references,
         clientName = appointment.client.getFullName(),

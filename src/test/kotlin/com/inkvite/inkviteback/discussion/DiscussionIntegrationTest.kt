@@ -2,6 +2,7 @@ package com.inkvite.inkviteback.discussion
 
 import com.inkvite.inkviteback.appointment.AbstractAppointmentIntegrationTest
 import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.appointment.entity.TattooStyle
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.auth.service.JwtService
 import com.inkvite.inkviteback.client.entity.TattooClient
@@ -32,7 +33,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
             Appointment(
                 artist = artist, client = client,
                 tattooDescription = "desc", tattooPlacement = "arm", tattooSize = "10x10cm",
-                firstTattoo = false, coverUp = false, verifiedAt = Instant.now()
+                firstTattoo = false, coverUp = false, color = false, style = TattooStyle.REALISM, verifiedAt = Instant.now()
             )
         )
     }

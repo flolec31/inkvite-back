@@ -2,14 +2,13 @@ package com.inkvite.inkviteback.discussion
 
 import com.inkvite.inkviteback.appointment.AbstractAppointmentIntegrationTest
 import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.appointment.entity.TattooStyle
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.client.entity.TattooClient
 import com.inkvite.inkviteback.discussion.entity.Message
 import com.inkvite.inkviteback.discussion.entity.MessageSender
-import com.inkvite.inkviteback.discussion.repository.MessageRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
@@ -21,7 +20,7 @@ class MessageRepositoryTest : AbstractAppointmentIntegrationTest() {
             Appointment(
                 artist = artist, client = client,
                 tattooDescription = "desc", tattooPlacement = "arm", tattooSize = "10x10cm",
-                firstTattoo = false, coverUp = false, verifiedAt = Instant.now()
+                firstTattoo = false, coverUp = false, color = false, style = TattooStyle.REALISM, verifiedAt = Instant.now()
             )
         )
     }

@@ -1,6 +1,7 @@
 package com.inkvite.inkviteback.appointment
 
 import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.appointment.entity.TattooStyle
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.auth.service.JwtService
 import com.inkvite.inkviteback.client.entity.TattooClient
@@ -35,6 +36,8 @@ class AppointmentManagementIntegrationTest : AbstractAppointmentIntegrationTest(
                 tattooSize = "10x10cm",
                 firstTattoo = false,
                 coverUp = false,
+                color = false,
+                style = TattooStyle.REALISM,
                 verifiedAt = verifiedAt
             )
         )
@@ -65,7 +68,7 @@ class AppointmentManagementIntegrationTest : AbstractAppointmentIntegrationTest(
         val artist = createActivatedArtist()
         val token = jwtService.generateAccessToken(artist.id)
         val client = tattooClientRepository.save(TattooClient(email = "client@test.com", firstName = "Jane", lastName = "Doe"))
-        appointmentRepository.save(Appointment(artist = artist, client = client, tattooDescription = "desc", tattooPlacement = "arm", tattooSize = "10x10cm", firstTattoo = false, coverUp = false))
+        appointmentRepository.save(Appointment(artist = artist, client = client, tattooDescription = "desc", tattooPlacement = "arm", tattooSize = "10x10cm", firstTattoo = false, coverUp = false, color = false, style = TattooStyle.REALISM))
 
         mockMvc.perform(get("/appointment").header("Authorization", "Bearer $token"))
             .andExpect(status().isOk)
@@ -86,6 +89,7 @@ class AppointmentManagementIntegrationTest : AbstractAppointmentIntegrationTest(
             .andExpect(jsonPath("$.content[0].lastName").value("Doe"))
             .andExpect(jsonPath("$.content[0].tattooPlacement").value("forearm"))
             .andExpect(jsonPath("$.content[0].description").value("A beautiful dragon tattoo on my forearm"))
+            .andExpect(jsonPath("$.content[0].style").value("REALISM"))
             .andExpect(jsonPath("$.content[0].receivedAt").isString)
             .andExpect(jsonPath("$.content[0].new").value(true))
             .andExpect(jsonPath("$.content[0].archived").value(false))
@@ -163,6 +167,8 @@ class AppointmentManagementIntegrationTest : AbstractAppointmentIntegrationTest(
                 tattooSize = "10x10cm",
                 firstTattoo = false,
                 coverUp = false,
+                color = false,
+                style = TattooStyle.REALISM,
                 verifiedAt = null
             )
         )
@@ -197,6 +203,8 @@ class AppointmentManagementIntegrationTest : AbstractAppointmentIntegrationTest(
             .andExpect(jsonPath("$.tattooSize").value("10x10cm"))
             .andExpect(jsonPath("$.firstTattoo").value(false))
             .andExpect(jsonPath("$.coverUp").value(false))
+            .andExpect(jsonPath("$.color").value(false))
+            .andExpect(jsonPath("$.style").value("REALISM"))
             .andExpect(jsonPath("$.receivedAt").isString)
             .andExpect(jsonPath("$.clientName").value("Jane Doe"))
             .andExpect(jsonPath("$.clientEmail").doesNotExist())

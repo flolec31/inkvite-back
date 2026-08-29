@@ -1,6 +1,7 @@
 package com.inkvite.inkviteback.appointment.dto
 
 import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.appointment.entity.TattooStyle
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.client.entity.TattooClient
 import jakarta.validation.Valid
@@ -18,6 +19,8 @@ data class AppointmentFormRequestDto(
     @field:NotBlank val size: String,
     val firstTattoo: Boolean,
     val coverUp: Boolean,
+    val color: Boolean,
+    val style: TattooStyle,
     @field:Valid @field:Size(max = 10) val references: List<ReferenceRequestDto> = emptyList()
 ) {
 
@@ -35,7 +38,9 @@ data class AppointmentFormRequestDto(
         tattooPlacement = this.placement,
         tattooSize = this.size,
         firstTattoo = this.firstTattoo,
-        coverUp = this.coverUp
+        coverUp = this.coverUp,
+        color = this.color,
+        style = this.style
     )
 
 }

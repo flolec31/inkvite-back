@@ -1,5 +1,6 @@
 package com.inkvite.inkviteback.appointment
 
+import com.inkvite.inkviteback.appointment.entity.TattooStyle
 import com.inkvite.inkviteback.email.service.EmailService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -33,6 +34,8 @@ class AppointmentSubmissionIntegrationTest : AbstractAppointmentIntegrationTest(
             "size" to "10x10cm",
             "firstTattoo" to false,
             "coverUp" to coverUp,
+            "color" to true,
+            "style" to "REALISM",
             "references" to references
         )
 
@@ -55,6 +58,8 @@ class AppointmentSubmissionIntegrationTest : AbstractAppointmentIntegrationTest(
         assertThat(form.tattooSize).isEqualTo("10x10cm")
         assertThat(form.firstTattoo).isFalse()
         assertThat(form.coverUp).isFalse()
+        assertThat(form.color).isTrue()
+        assertThat(form.style).isEqualTo(TattooStyle.REALISM)
         assertThat(form.submittedAt).isNotNull()
         assertThat(form.verifiedAt).isNull()
 

@@ -1,6 +1,7 @@
 package com.inkvite.inkviteback.email.service
 
 import com.inkvite.inkviteback.appointment.entity.Appointment
+import com.inkvite.inkviteback.appointment.entity.TattooStyle
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.client.entity.TattooClient
 import com.inkvite.inkviteback.email.client.ResendEmailClient
@@ -112,7 +113,9 @@ class EmailServiceImplTest {
             tattooPlacement = "forearm",
             tattooSize = "10x10cm",
             firstTattoo = false,
-            coverUp = false
+            coverUp = false,
+            color = false,
+            style = TattooStyle.REALISM
         )
     }
 }
