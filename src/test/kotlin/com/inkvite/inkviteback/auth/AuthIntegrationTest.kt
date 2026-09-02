@@ -816,6 +816,7 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
         assertThat(passwordResetTokenRepository.findAll()).isEmpty()
         // old refresh tokens wiped; only the new one from auto-login remains
         assertThat(refreshTokenRepository.findAll()).hasSize(1)
+        verify(emailService).sendPasswordChangedEmail("artist@test.com", "Test Artist")
         // can log in with new password
         mockMvc.perform(
             post("/auth/login")
