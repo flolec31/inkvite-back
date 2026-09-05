@@ -14,6 +14,8 @@ app:
     access-token-expiry: 900
   email:
     from: noreply@inkvite.me
+  support:
+    notification-email: support@inkvite.me
 
 springdoc:
   api-docs:

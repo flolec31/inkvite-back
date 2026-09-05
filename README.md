@@ -91,13 +91,14 @@ Swagger UI is disabled in production (`springdoc.swagger-ui.enabled: false`). En
 
 ## Environment variables
 
-| Variable                 | Description                                      |
-|--------------------------|--------------------------------------------------|
-| `APP_JWT_SECRET`         | Base64-encoded HMAC-SHA256 secret (min 256 bits) |
-| `APP_BASE_URL`           | Public base URL of the API (used in emails)      |
-| `APP_EMAIL_FROM`         | Sender address (default: `noreply@inkvite.me`)   |
-| `RESEND_API_KEY`         | Resend API key                                   |
-| `APP_STORAGE_ENDPOINT`   | S3/MinIO endpoint URL                            |
-| `APP_STORAGE_BUCKET`     | Bucket name                                      |
-| `APP_STORAGE_ACCESS_KEY` | Storage access key                               |
-| `APP_STORAGE_SECRET_KEY` | Storage secret key                               |
+| Variable                         | Description                                             |
+|----------------------------------|---------------------------------------------------------|
+| `APP_JWT_SECRET`                 | Base64-encoded HMAC-SHA256 secret (min 256 bits)        |
+| `APP_BASE_URL`                   | Public base URL of the API (used in emails)             |
+| `APP_EMAIL_FROM`                 | Sender address (default: `noreply@inkvite.me`)          |
+| `APP_SUPPORT_NOTIFICATION_EMAIL` | Recipient for new support/contact message notifications |
+| `RESEND_API_KEY`                 | Resend API key                                          |
+| `APP_STORAGE_ENDPOINT`           | S3/MinIO endpoint URL                                   |
+| `APP_STORAGE_BUCKET`             | Bucket name                                             |
+| `APP_STORAGE_ACCESS_KEY`         | Storage access key                                      |
+| `APP_STORAGE_SECRET_KEY`         | Storage secret key                                      |

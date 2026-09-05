@@ -4,14 +4,18 @@ import com.inkvite.inkviteback.AbstractIntegrationTest
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
 import com.inkvite.inkviteback.auth.service.JwtService
+import com.inkvite.inkviteback.email.service.EmailService
 import com.inkvite.inkviteback.support.entity.SupportMessageType
 import com.inkvite.inkviteback.support.repository.SupportMessageRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.verify
+import org.mockito.kotlin.argThat
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -27,6 +31,7 @@ class SupportMessageIntegrationTest : AbstractIntegrationTest() {
     @Autowired lateinit var jwtService: JwtService
     @Autowired lateinit var artistRepository: TattooArtistRepository
     @Autowired lateinit var supportMessageRepository: SupportMessageRepository
+    @MockitoBean lateinit var emailService: EmailService
 
     @AfterEach
     fun cleanup() {
@@ -114,6 +119,8 @@ class SupportMessageIntegrationTest : AbstractIntegrationTest() {
         assertThat(saved.message).isEqualTo("How do I change my slug?")
         assertThat(saved.screenshotKey).isNull()
         assertThat(saved.createdAt).isNotNull()
+        verify(emailService).sendSupportMessageReceivedEmail(argThat { id == saved.id })
+        verify(emailService).sendSupportMessageConfirmationEmail("artist@test.com", "Test Artist")
     }
 
     @Test

@@ -152,8 +152,10 @@ class AuthServiceImpl(
         }
         passwordResetTokenRepository.delete(resetToken)
         val encodedNewPassword = passwordEncoder.encode(request.newPassword)!!
+        val artist = tattooArtistService.findById(resetToken.tattooArtistId)
         tattooArtistService.updatePassword(resetToken.tattooArtistId, encodedNewPassword)
         refreshTokenRepository.deleteAllByTattooArtistId(resetToken.tattooArtistId)
+        eventPublisher.publishEvent(PasswordChangedEmailRequested(artist.email, artist.artistName))
         return login(resetToken.tattooArtistId)
     }
 }

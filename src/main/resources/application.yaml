@@ -20,6 +20,8 @@ app:
     access-token-expiry: 900
   email:
     from: ${APP_EMAIL_FROM:noreply@inkvite.me}
+  support:
+    notification-email: ${APP_SUPPORT_NOTIFICATION_EMAIL:}
   storage:
     endpoint: ${APP_STORAGE_ENDPOINT:}
     bucket: ${APP_STORAGE_BUCKET:}

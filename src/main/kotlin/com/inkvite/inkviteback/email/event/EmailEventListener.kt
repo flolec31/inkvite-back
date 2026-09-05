@@ -5,7 +5,10 @@ import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailReq
 import com.inkvite.inkviteback.auth.event.ArtistVerificationEmailRequested
 import com.inkvite.inkviteback.auth.event.PasswordChangedEmailRequested
 import com.inkvite.inkviteback.auth.event.PasswordResetEmailRequested
+import com.inkvite.inkviteback.discussion.event.NewMessageEmailRequested
 import com.inkvite.inkviteback.email.service.EmailService
+import com.inkvite.inkviteback.support.event.SupportMessageConfirmationEmailRequested
+import com.inkvite.inkviteback.support.event.SupportMessageReceivedEmailRequested
 import org.springframework.stereotype.Component
 import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
@@ -38,5 +41,20 @@ class EmailEventListener(
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun on(event: AppointmentNotificationEmailRequested) {
         emailService.sendAppointmentNotificationEmail(event.appointment)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun on(event: NewMessageEmailRequested) {
+        emailService.sendNewMessageEmailToClient(event.appointment)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun on(event: SupportMessageReceivedEmailRequested) {
+        emailService.sendSupportMessageReceivedEmail(event.supportMessage)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun on(event: SupportMessageConfirmationEmailRequested) {
+        emailService.sendSupportMessageConfirmationEmail(event.to, event.artistName)
     }
 }

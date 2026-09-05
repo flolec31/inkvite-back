@@ -6,6 +6,8 @@ import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.client.entity.TattooClient
 import com.inkvite.inkviteback.email.client.ResendEmailClient
 import com.inkvite.inkviteback.email.service.implementation.EmailServiceImpl
+import com.inkvite.inkviteback.support.entity.SupportMessage
+import com.inkvite.inkviteback.support.entity.SupportMessageType
 import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.BeforeEach
@@ -25,7 +27,7 @@ class EmailServiceImplTest {
 
     @BeforeEach
     fun setUp() {
-        emailService = EmailServiceImpl(resendEmailClient, "http://localhost:8080")
+        emailService = EmailServiceImpl(resendEmailClient, "http://localhost:8080", "support@inkvite.me")
     }
 
     @Test
@@ -34,7 +36,7 @@ class EmailServiceImplTest {
 
         verify(resendEmailClient).sendEmail(
             "user@example.com",
-            "verify-artist",
+            "verify-artist-signup",
             mapOf(
                 "LINK" to "http://localhost:8080/sign-up/verify?token=abc123",
                 "ARTIST_NAME" to "Test Artist"
@@ -48,7 +50,7 @@ class EmailServiceImplTest {
 
         verify(resendEmailClient).sendEmail(
             "user@example.com",
-            "reset-password",
+            "verify-reset-password-3",
             mapOf(
                 "LINK" to "http://localhost:8080/reset-password?token=reset-token-123",
                 "ARTIST_NAME" to "Test Artist"
@@ -64,7 +66,7 @@ class EmailServiceImplTest {
 
         verify(resendEmailClient).sendEmail(
             "client@test.com",
-            "verify-appointment",
+            "verify-appointment-request",
             mapOf(
                 "LINK" to "http://localhost:8080/@test-artist/verify?appointmentId=${appointment.id}",
                 "ARTIST_NAME" to "Test Artist",
@@ -81,12 +83,73 @@ class EmailServiceImplTest {
 
         verify(resendEmailClient).sendEmail(
             "artist@test.com",
-            "new-appointment-notification",
+            "notify-artist-new-appointment-request",
             mapOf(
-                "DASHBOARD_LINK" to "http://localhost:8080/dashboard",
+                "LINK" to "http://localhost:8080/dashboard",
                 "ARTIST_NAME" to "Test Artist",
                 "CLIENT_NAME" to "Jane Doe"
             )
+        )
+    }
+
+    @Test
+    fun `sendNewMessageEmailToClient delegates to client with artist and client names`() {
+        val appointment = buildAppointment(clientEmail = "client@test.com")
+
+        emailService.sendNewMessageEmailToClient(appointment)
+
+        verify(resendEmailClient).sendEmail(
+            "client@test.com",
+            "notify-client-new-message",
+            mapOf(
+                "ARTIST_NAME" to "Test Artist",
+                "CLIENT_FIRSTNAME" to "Jane"
+            )
+        )
+    }
+
+    @Test
+    fun `sendSupportMessageReceivedEmail sends to the configured notification address`() {
+        val artist = TattooArtist(
+            id = UUID.randomUUID(),
+            email = "artist@test.com",
+            password = "hashed",
+            artistName = "Test Artist",
+            slug = "test-artist",
+            city = "Test City",
+            countryCode = "FR",
+            registeredAt = Instant.now(),
+            activatedAt = Instant.now()
+        )
+        val supportMessage = SupportMessage(
+            artist = artist,
+            type = SupportMessageType.BUG,
+            message = "The upload button is broken",
+            createdAt = Instant.now(),
+        )
+
+        emailService.sendSupportMessageReceivedEmail(supportMessage)
+
+        verify(resendEmailClient).sendEmail(
+            "support@inkvite.me",
+            "new-support-message",
+            mapOf(
+                "TYPE" to "BUG",
+                "ARTIST_NAME" to "Test Artist",
+                "ARTIST_EMAIL" to "artist@test.com",
+                "MESSAGE" to "The upload button is broken"
+            )
+        )
+    }
+
+    @Test
+    fun `sendSupportMessageConfirmationEmail delegates to client`() {
+        emailService.sendSupportMessageConfirmationEmail("artist@test.com", "Test Artist")
+
+        verify(resendEmailClient).sendEmail(
+            "artist@test.com",
+            "confirm-artist-new-support-ticket",
+            mapOf("ARTIST_NAME" to "Test Artist")
         )
     }
 

@@ -7,12 +7,16 @@ import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.auth.service.JwtService
 import com.inkvite.inkviteback.client.entity.TattooClient
 import com.inkvite.inkviteback.discussion.entity.MessageSender
+import com.inkvite.inkviteback.email.service.EmailService
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.verify
+import org.mockito.kotlin.argThat
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
@@ -26,6 +30,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
 
     @Autowired lateinit var mockMvc: MockMvc
     @Autowired lateinit var jwtService: JwtService
+    @MockitoBean lateinit var emailService: EmailService
 
     private fun saveVerifiedAppointment(artist: TattooArtist): Appointment {
         val client = tattooClientRepository.save(TattooClient(email = "client-${UUID.randomUUID()}@test.com", firstName = "Jane", lastName = "Doe"))
@@ -64,6 +69,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
         assertThat(persisted[0].sender).isEqualTo(MessageSender.ARTIST)
         assertThat(persisted[0].content).isEqualTo("Hello there")
         assertThat(persisted[0].readAt).isNull()
+        verify(emailService).sendNewMessageEmailToClient(argThat { id == appointment.id })
     }
 
     @Test
