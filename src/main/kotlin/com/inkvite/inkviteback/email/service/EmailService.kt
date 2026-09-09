@@ -19,8 +19,14 @@ interface EmailService {
     /** Sent to the artist once the client has verified their appointment request. */
     fun sendAppointmentNotificationEmail(appointment: Appointment)
 
+    /** Sent to the client once they verify their appointment request, confirming it and giving them their access link. */
+    fun sendAppointmentRequestConfirmationEmail(appointment: Appointment)
+
     /** Sent to the client when the artist posts a new message in their appointment's discussion thread. */
     fun sendNewMessageEmailToClient(appointment: Appointment)
+
+    /** Sent to a client who asks to retrieve their access links with a given artist (one link per appointment). */
+    fun sendAppointmentLinksEmail(appointments: List<Appointment>)
 
     /** Sent to the support notification address when an artist submits a support/contact message. */
     fun sendSupportMessageReceivedEmail(supportMessage: SupportMessage)

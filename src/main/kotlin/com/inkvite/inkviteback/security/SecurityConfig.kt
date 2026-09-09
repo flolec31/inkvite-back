@@ -60,6 +60,7 @@ class SecurityConfig(
                 it.requestMatchers("/v3/api-docs/**").permitAll()
                 it.requestMatchers(HttpMethod.POST, "/appointment/{slug}").permitAll()
                 it.requestMatchers(HttpMethod.POST, "/appointment/{slug}/reference").permitAll()
+                it.requestMatchers(HttpMethod.POST, "/appointment/{slug}/links").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/appointment/verify").permitAll()
                 it.anyRequest().authenticated()
             }

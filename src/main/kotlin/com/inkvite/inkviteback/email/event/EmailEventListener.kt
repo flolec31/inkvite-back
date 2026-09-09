@@ -1,5 +1,7 @@
 package com.inkvite.inkviteback.email.event
 
+import com.inkvite.inkviteback.appointment.event.AppointmentRequestConfirmationEmailRequested
+import com.inkvite.inkviteback.appointment.event.AppointmentLinksRequested
 import com.inkvite.inkviteback.appointment.event.AppointmentNotificationEmailRequested
 import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailRequested
 import com.inkvite.inkviteback.auth.event.ArtistVerificationEmailRequested
@@ -41,6 +43,16 @@ class EmailEventListener(
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun on(event: AppointmentNotificationEmailRequested) {
         emailService.sendAppointmentNotificationEmail(event.appointment)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun on(event: AppointmentRequestConfirmationEmailRequested) {
+        emailService.sendAppointmentRequestConfirmationEmail(event.appointment)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun on(event: AppointmentLinksRequested) {
+        emailService.sendAppointmentLinksEmail(event.appointments)
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)

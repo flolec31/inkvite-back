@@ -2,6 +2,8 @@ package com.inkvite.inkviteback.email.event
 
 import com.inkvite.inkviteback.appointment.entity.Appointment
 import com.inkvite.inkviteback.appointment.entity.TattooStyle
+import com.inkvite.inkviteback.appointment.event.AppointmentRequestConfirmationEmailRequested
+import com.inkvite.inkviteback.appointment.event.AppointmentLinksRequested
 import com.inkvite.inkviteback.appointment.event.AppointmentNotificationEmailRequested
 import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailRequested
 import com.inkvite.inkviteback.artist.entity.TattooArtist
@@ -64,6 +66,26 @@ class EmailEventListenerTest {
         listener.on(event)
 
         verify(emailService).sendAppointmentNotificationEmail(appointment)
+    }
+
+    @Test
+    fun `on AppointmentLinksRequested delegates to email service`() {
+        val appointments = listOf(buildAppointment())
+        val event = AppointmentLinksRequested(appointments)
+
+        listener.on(event)
+
+        verify(emailService).sendAppointmentLinksEmail(appointments)
+    }
+
+    @Test
+    fun `on AppointmentRequestConfirmationEmailRequested delegates to email service`() {
+        val appointment = buildAppointment()
+        val event = AppointmentRequestConfirmationEmailRequested(appointment)
+
+        listener.on(event)
+
+        verify(emailService).sendAppointmentRequestConfirmationEmail(appointment)
     }
 
     private fun buildAppointment(): Appointment {

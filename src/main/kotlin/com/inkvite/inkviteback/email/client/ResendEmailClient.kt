@@ -16,7 +16,7 @@ class ResendEmailClient(
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    fun sendEmail(to: String, templateId: String, variables: Map<String, String>) {
+    fun sendEmail(to: String, templateId: String, variables: Map<String, Any>) {
         val template = Template.builder()
             .id(templateId)
             .variables(variables)

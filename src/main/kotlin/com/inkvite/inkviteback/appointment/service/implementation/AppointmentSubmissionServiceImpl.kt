@@ -1,6 +1,8 @@
 package com.inkvite.inkviteback.appointment.service.implementation
 
 import com.inkvite.inkviteback.appointment.dto.AppointmentFormRequestDto
+import com.inkvite.inkviteback.appointment.event.AppointmentRequestConfirmationEmailRequested
+import com.inkvite.inkviteback.appointment.event.AppointmentLinksRequested
 import com.inkvite.inkviteback.appointment.event.AppointmentNotificationEmailRequested
 import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailRequested
 import com.inkvite.inkviteback.appointment.exception.AppointmentNotFoundException
@@ -56,5 +58,18 @@ class AppointmentSubmissionServiceImpl(
         appointment.verifiedAt = Instant.now()
         appointment = appointmentRepository.save(appointment)
         eventPublisher.publishEvent(AppointmentNotificationEmailRequested(appointment))
+        eventPublisher.publishEvent(AppointmentRequestConfirmationEmailRequested(appointment))
+    }
+
+    override fun requestLinks(slug: String, email: String) {
+        val artist = tattooArtistService.findBySlug(slug)
+        val appointments =
+            appointmentRepository.findByArtistIdAndClientEmailIgnoreCaseAndVerifiedAtNotNullOrderBySubmittedAtDesc(
+                artist.id,
+                email
+            )
+        if (appointments.isNotEmpty()) {
+            eventPublisher.publishEvent(AppointmentLinksRequested(appointments))
+        }
     }
 }

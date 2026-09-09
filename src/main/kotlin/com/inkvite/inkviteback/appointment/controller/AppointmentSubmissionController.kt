@@ -1,6 +1,7 @@
 package com.inkvite.inkviteback.appointment.controller
 
 import com.inkvite.inkviteback.appointment.dto.AppointmentFormRequestDto
+import com.inkvite.inkviteback.appointment.dto.AppointmentLinksRequestDto
 import com.inkvite.inkviteback.appointment.service.AppointmentSubmissionService
 import com.inkvite.inkviteback.storage.dto.ImageUploadResponseDto
 import jakarta.validation.Valid
@@ -37,4 +38,11 @@ class AppointmentSubmissionController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun verify(@RequestParam appointmentId: UUID) =
         appointmentSubmissionService.verify(appointmentId)
+
+    @PostMapping("/{slug}/links")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun requestLinks(
+        @PathVariable @Pattern(regexp = "^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$") slug: String,
+        @Valid @RequestBody request: AppointmentLinksRequestDto
+    ) = appointmentSubmissionService.requestLinks(slug, request.email)
 }
