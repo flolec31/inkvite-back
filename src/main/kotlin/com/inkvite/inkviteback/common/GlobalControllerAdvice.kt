@@ -1,5 +1,6 @@
 package com.inkvite.inkviteback.common
 
+import com.inkvite.inkviteback.email.exception.EmailDeliveryException
 import jakarta.validation.ConstraintViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.multipart.MaxUploadSizeExceededException
 
 @RestControllerAdvice
-class GlobalControllerAdvice {
+class GlobalControllerAdvice : AbstractControllerAdvice() {
 
     @ExceptionHandler(ConstraintViolationException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -20,4 +21,7 @@ class GlobalControllerAdvice {
     fun handleMaxUploadSizeExceeded() =
         mapOf("error" to "File is too large")
 
+    @ExceptionHandler(EmailDeliveryException::class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    fun handleEmailDelivery(e: EmailDeliveryException) = handleException(e, is5xx = true)
 }

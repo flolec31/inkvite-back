@@ -1,4 +1,4 @@
-package com.inkvite.inkviteback.auth.dto
+package com.inkvite.inkviteback.auth.artist.dto
 
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank

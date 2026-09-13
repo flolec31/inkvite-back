@@ -33,4 +33,7 @@ interface EmailService {
 
     /** Sent to the artist confirming their support message was received. */
     fun sendSupportMessageConfirmationEmail(to: String, artistName: String)
+
+    /** Sent to a client requesting a 6-digit code to access their appointments. */
+    fun sendClientAccessCodeEmail(to: String, clientFirstName: String, code: String)
 }

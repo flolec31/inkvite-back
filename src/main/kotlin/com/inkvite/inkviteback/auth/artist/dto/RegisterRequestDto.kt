@@ -1,4 +1,4 @@
-package com.inkvite.inkviteback.auth.dto
+package com.inkvite.inkviteback.auth.artist.dto
 
 import com.inkvite.inkviteback.artist.model.RegisterRequestModel
 import jakarta.validation.constraints.Email

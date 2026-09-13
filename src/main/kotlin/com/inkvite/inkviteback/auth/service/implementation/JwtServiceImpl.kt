@@ -1,5 +1,6 @@
 package com.inkvite.inkviteback.auth.service.implementation
 
+import com.inkvite.inkviteback.auth.Role
 import com.inkvite.inkviteback.auth.service.JwtService
 import com.inkvite.inkviteback.security.JwtConfig
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm
@@ -17,11 +18,12 @@ class JwtServiceImpl(
     private val jwtConfig: JwtConfig,
 ) : JwtService {
 
-    override fun generateAccessToken(artistId: UUID): String {
+    override fun generateAccessToken(subjectId: UUID, role: Role): String {
         val now = Instant.now()
         val header = JwsHeader.with(MacAlgorithm.HS256).build()
         val claims = JwtClaimsSet.builder()
-            .subject(artistId.toString())
+            .subject(subjectId.toString())
+            .claim("type", role.claim)
             .issuedAt(now)
             .expiresAt(now.plusSeconds(jwtConfig.accessTokenExpiry))
             .build()

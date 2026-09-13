@@ -1,9 +1,9 @@
-package com.inkvite.inkviteback.auth.dto
+package com.inkvite.inkviteback.auth.artist.dto
 
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
-data class ResetPasswordRequestDto(
-    @field:NotBlank val token: String,
+data class ChangePasswordRequestDto(
+    @field:NotBlank val currentPassword: String,
     @field:NotBlank @field:Size(min = 8) val newPassword: String,
 )

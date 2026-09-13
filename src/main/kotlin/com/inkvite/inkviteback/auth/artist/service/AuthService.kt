@@ -1,9 +1,9 @@
-package com.inkvite.inkviteback.auth.service
+package com.inkvite.inkviteback.auth.artist.service
 
-import com.inkvite.inkviteback.auth.dto.ChangePasswordRequestDto
+import com.inkvite.inkviteback.auth.artist.dto.ChangePasswordRequestDto
 import com.inkvite.inkviteback.auth.dto.LoginResponseDto
-import com.inkvite.inkviteback.auth.dto.RegisterRequestDto
-import com.inkvite.inkviteback.auth.dto.ResetPasswordRequestDto
+import com.inkvite.inkviteback.auth.artist.dto.RegisterRequestDto
+import com.inkvite.inkviteback.auth.artist.dto.ResetPasswordRequestDto
 import java.util.UUID
 
 interface AuthService {

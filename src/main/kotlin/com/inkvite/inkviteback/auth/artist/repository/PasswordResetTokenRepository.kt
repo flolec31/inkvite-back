@@ -1,6 +1,6 @@
-package com.inkvite.inkviteback.auth.repository
+package com.inkvite.inkviteback.auth.artist.repository
 
-import com.inkvite.inkviteback.auth.entity.PasswordResetToken
+import com.inkvite.inkviteback.auth.artist.entity.PasswordResetToken
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID

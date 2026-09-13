@@ -1,4 +1,4 @@
-package com.inkvite.inkviteback.auth.event
+package com.inkvite.inkviteback.auth.artist.event
 
 data class PasswordResetEmailRequested(
     val to: String,

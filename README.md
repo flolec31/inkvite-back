@@ -59,33 +59,36 @@ Tests spin up Postgres and MinIO via Testcontainers automatically. `EmailService
 
 ## API overview
 
-| Method | Path                            | Auth   | Description                            |
-|--------|---------------------------------|--------|----------------------------------------|
-| POST   | `/auth/register`                | public | Register a tattoo artist               |
-| GET    | `/auth/verify`                  | public | Verify email address                   |
-| POST   | `/auth/resend-verification`     | public | Resend verification email              |
-| POST   | `/auth/login`                   | public | Login, returns JWT + refresh token     |
-| POST   | `/auth/refresh`                 | public | Rotate refresh token                   |
-| POST   | `/auth/logout`                  | public | Invalidate refresh token               |
-| POST   | `/auth/forgot-password`         | public | Send password-reset email              |
-| POST   | `/auth/reset-password`          | public | Reset password with token              |
-| POST   | `/auth/change-password`         | JWT    | Change own password                    |
-| GET    | `/artists/{slug}`               | public | Get artist public profile              |
-| GET    | `/artists/slug-available`       | public | Check slug availability                |
-| GET    | `/artists/me`                   | JWT    | Get own profile                        |
-| PATCH  | `/artists/me`                   | JWT    | Update profile                         |
-| POST   | `/artists/me/photo`             | JWT    | Upload profile photo                   |
-| DELETE | `/artists/me/photo`             | JWT    | Delete profile photo                   |
-| POST   | `/appointment/{slug}`           | public | Submit appointment request             |
-| POST   | `/appointment/{slug}/reference` | public | Upload reference photo                 |
-| GET    | `/appointment/verify`           | public | Verify appointment (client email link) |
-| GET    | `/appointment/`                 | JWT    | List own appointments (paginated)      |
-| GET    | `/appointment/{id}`             | JWT    | Get appointment details                |
-| POST   | `/appointment/{id}/archive`     | JWT    | Archive appointment                    |
-| POST   | `/appointment/{id}/unarchive`   | JWT    | Unarchive appointment                  |
-| POST   | `/appointment/{id}/mark-new`    | JWT    | Mark appointment as new                |
-| POST   | `/support/screenshot`           | JWT    | Upload support message screenshot      |
-| POST   | `/support`                      | JWT    | Submit a support/contact message       |
+| Method | Path                               | Auth   | Description                              |
+|--------|------------------------------------|--------|------------------------------------------|
+| POST   | `/auth/artist/register`            | public | Register a tattoo artist                 |
+| GET    | `/auth/artist/verify`              | public | Verify email address                     |
+| POST   | `/auth/artist/resend-verification` | public | Resend verification email                |
+| POST   | `/auth/artist/login`               | public | Login, returns JWT + refresh token       |
+| POST   | `/auth/artist/refresh`             | public | Rotate refresh token                     |
+| POST   | `/auth/artist/logout`              | public | Invalidate refresh token                 |
+| POST   | `/auth/artist/forgot-password`     | public | Send password-reset email                |
+| POST   | `/auth/artist/reset-password`      | public | Reset password with token                |
+| POST   | `/auth/artist/change-password`     | JWT    | Change own password                      |
+| POST   | `/auth/client/request-code`        | public | Email a 6-digit access code to a client  |
+| POST   | `/auth/client/verify-code`         | public | Verify code, returns JWT + refresh token |
+| POST   | `/auth/client/refresh`             | public | Rotate client refresh token              |
+| GET    | `/artists/{slug}`                  | public | Get artist public profile                |
+| GET    | `/artists/slug-available`          | public | Check slug availability                  |
+| GET    | `/artists/me`                      | JWT    | Get own profile                          |
+| PATCH  | `/artists/me`                      | JWT    | Update profile                           |
+| POST   | `/artists/me/photo`                | JWT    | Upload profile photo                     |
+| DELETE | `/artists/me/photo`                | JWT    | Delete profile photo                     |
+| POST   | `/appointment/{slug}`              | public | Submit appointment request               |
+| POST   | `/appointment/{slug}/reference`    | public | Upload reference photo                   |
+| GET    | `/appointment/verify`              | public | Verify appointment (client email link)   |
+| GET    | `/appointment/`                    | JWT    | List own appointments (paginated)        |
+| GET    | `/appointment/{id}`                | JWT    | Get appointment details                  |
+| POST   | `/appointment/{id}/archive`        | JWT    | Archive appointment                      |
+| POST   | `/appointment/{id}/unarchive`      | JWT    | Unarchive appointment                    |
+| POST   | `/appointment/{id}/mark-new`       | JWT    | Mark appointment as new                  |
+| POST   | `/support/screenshot`              | JWT    | Upload support message screenshot        |
+| POST   | `/support`                         | JWT    | Submit a support/contact message         |
 
 Swagger UI is disabled in production (`springdoc.swagger-ui.enabled: false`). Enable it locally by overriding in `application-local.yaml`.
 

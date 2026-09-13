@@ -4,6 +4,7 @@ import com.inkvite.inkviteback.AbstractIntegrationTest
 import com.inkvite.inkviteback.TestcontainersConfiguration
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
+import com.inkvite.inkviteback.auth.Role
 import com.inkvite.inkviteback.auth.service.JwtService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -138,7 +139,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `upload photo stores key and returns photo URL`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val photoBytes = ByteArray(100) { it.toByte() }
 
         mockMvc.perform(
@@ -156,7 +157,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `upload photo with invalid content type returns 400`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             MockMvcRequestBuilders.multipart("/artists/me/photo")
@@ -170,7 +171,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `upload photo exceeding 5mb returns 400`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             MockMvcRequestBuilders.multipart("/artists/me/photo")
@@ -195,7 +196,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `update profile with new artist name succeeds`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/artists/me")
@@ -211,7 +212,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `update profile with new slug succeeds`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/artists/me")
@@ -227,7 +228,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `update profile with both fields succeeds`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/artists/me")
@@ -243,7 +244,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `update profile with new city and country code succeeds`() {
         val artist = createActivatedArtist(city = "Paris", countryCode = "FR")
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/artists/me")
@@ -260,7 +261,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `update profile with invalid country code format returns 400`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/artists/me")
@@ -287,7 +288,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
             )
         )
         val artist = createActivatedArtist(email = "artist@test.com", slug = "my-slug")
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/artists/me")
@@ -303,7 +304,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     fun `update profile with taken slug returns 409`() {
         createActivatedArtist(email = "other@test.com", slug = "taken-slug")
         val artist = createActivatedArtist(email = "artist@test.com", slug = "my-slug")
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/artists/me")
@@ -318,7 +319,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `update profile with no fields returns 400`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             MockMvcRequestBuilders.patch("/artists/me")
@@ -344,7 +345,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `get profile returns artist name, slug, and null photo url when no photo is set`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             get("/artists/me")
@@ -364,7 +365,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
 
     @Test
     fun `get profile with jwt subject not matching any artist returns 404`() {
-        val token = jwtService.generateAccessToken(UUID.randomUUID())
+        val token = jwtService.generateAccessToken(UUID.randomUUID(), Role.ARTIST)
 
         mockMvc.perform(
             get("/artists/me")
@@ -385,7 +386,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
             RequestBody.fromBytes(ByteArray(10))
         )
         assertThat(s3ObjectExists(photoKey)).isTrue()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             MockMvcRequestBuilders.delete("/artists/me/photo")
@@ -401,7 +402,7 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `delete photo when no photo is set returns 204`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             MockMvcRequestBuilders.delete("/artists/me/photo")

@@ -1,4 +1,4 @@
-package com.inkvite.inkviteback.auth.entity
+package com.inkvite.inkviteback.auth.artist.entity
 
 import jakarta.persistence.Entity
 import jakarta.persistence.Id

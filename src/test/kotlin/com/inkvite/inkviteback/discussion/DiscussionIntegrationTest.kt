@@ -4,6 +4,7 @@ import com.inkvite.inkviteback.appointment.AbstractAppointmentIntegrationTest
 import com.inkvite.inkviteback.appointment.entity.Appointment
 import com.inkvite.inkviteback.appointment.entity.TattooStyle
 import com.inkvite.inkviteback.artist.entity.TattooArtist
+import com.inkvite.inkviteback.auth.Role
 import com.inkvite.inkviteback.auth.service.JwtService
 import com.inkvite.inkviteback.client.entity.TattooClient
 import com.inkvite.inkviteback.discussion.entity.MessageSender
@@ -48,7 +49,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `post message returns 201 and persists an artist message`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
 
         mockMvc.perform(
@@ -75,7 +76,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `post message returns 400 when content is blank`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
 
         mockMvc.perform(
@@ -89,7 +90,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `post message returns 400 when content exceeds max length`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
 
         mockMvc.perform(
@@ -112,7 +113,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `post message returns 404 when appointment does not exist`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             post("/appointment/${UUID.randomUUID()}/messages")
@@ -128,7 +129,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     fun `post message returns 403 when appointment belongs to another artist`() {
         val artist = createActivatedArtist(slug = "my-artist")
         val other = createActivatedArtist(slug = "other-artist")
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(other)
 
         mockMvc.perform(
@@ -144,7 +145,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `post image-only message returns 201 and persists imageKey with signed url`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
         val imageKey = "messages/${artist.id}/${UUID.randomUUID()}"
 
@@ -167,7 +168,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `post message with content and image returns 201 and persists both`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
         val imageKey = "messages/${artist.id}/${UUID.randomUUID()}"
 
@@ -189,7 +190,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `post message returns 400 when neither content nor image is present`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
 
         mockMvc.perform(
@@ -203,7 +204,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `post message returns 400 when imageKey belongs to another artist`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
         val foreignKey = "messages/${UUID.randomUUID()}/${UUID.randomUUID()}"
 
@@ -222,7 +223,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `upload message image returns 201 with key under messages prefix and signed url`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
 
         mockMvc.perform(
@@ -238,7 +239,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `upload message image returns 400 for invalid content type`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
 
         mockMvc.perform(
@@ -254,7 +255,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     fun `upload message image returns 403 when appointment belongs to another artist`() {
         val artist = createActivatedArtist(slug = "my-artist")
         val other = createActivatedArtist(slug = "other-artist")
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(other)
 
         mockMvc.perform(
@@ -277,7 +278,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `get messages returns thread oldest first`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
         mockMvc.perform(post("/appointment/${appointment.id}/messages").header("Authorization", "Bearer $token")
             .contentType(MediaType.APPLICATION_JSON).content("""{"content":"first"}"""))
@@ -295,7 +296,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `get messages returns signed imageUrl for image messages`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
         messageRepository.save(
             com.inkvite.inkviteback.discussion.entity.Message(
@@ -316,7 +317,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `get messages returns null imageUrl for text messages`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
         mockMvc.perform(post("/appointment/${appointment.id}/messages").header("Authorization", "Bearer $token")
             .contentType(MediaType.APPLICATION_JSON).content("""{"content":"hi"}"""))
@@ -329,7 +330,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     @Test
     fun `get messages returns empty array when no messages`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
 
         mockMvc.perform(get("/appointment/${appointment.id}/messages").header("Authorization", "Bearer $token"))
@@ -348,7 +349,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
     fun `get messages returns 403 when appointment belongs to another artist`() {
         val artist = createActivatedArtist(slug = "my-artist")
         val other = createActivatedArtist(slug = "other-artist")
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(other)
 
         mockMvc.perform(get("/appointment/${appointment.id}/messages").header("Authorization", "Bearer $token"))

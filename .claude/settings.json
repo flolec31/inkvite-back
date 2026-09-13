@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(./gradlew bootRun)",
+      "Bash(./gradlew bootRun:*)",
+      "Bash(./gradlew bootTestRun)",
+      "Bash(./gradlew bootTestRun:*)"
+    ]
+  }
+}

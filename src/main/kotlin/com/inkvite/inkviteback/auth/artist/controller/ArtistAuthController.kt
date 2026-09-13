@@ -1,7 +1,8 @@
-package com.inkvite.inkviteback.auth.controller
+package com.inkvite.inkviteback.auth.artist.controller
 
-import com.inkvite.inkviteback.auth.dto.*
-import com.inkvite.inkviteback.auth.service.AuthService
+import com.inkvite.inkviteback.auth.artist.dto.*
+import com.inkvite.inkviteback.auth.dto.LoginResponseDto
+import com.inkvite.inkviteback.auth.artist.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
@@ -9,8 +10,8 @@ import org.springframework.web.bind.annotation.*
 import java.util.UUID
 
 @RestController
-@RequestMapping("/auth")
-class AuthController(
+@RequestMapping("/auth/artist")
+class ArtistAuthController(
     private val authService: AuthService
 ) {
 

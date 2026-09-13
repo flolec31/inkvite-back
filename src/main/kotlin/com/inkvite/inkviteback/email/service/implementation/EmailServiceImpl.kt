@@ -160,4 +160,13 @@ class EmailServiceImpl(
         resendEmailClient.sendEmail(to, "confirm-artist-new-support-ticket", variables)
     }
 
+    override fun sendClientAccessCodeEmail(to: String, clientFirstName: String, code: String) {
+        logger.debug("Sending client access code email to: $to")
+        val variables = mapOf(
+            "CLIENT_FIRSTNAME" to clientFirstName,
+            "CODE" to code,
+        )
+        resendEmailClient.sendEmail(to, "verify-client-access-code", variables)
+    }
+
 }
