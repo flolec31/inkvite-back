@@ -70,6 +70,7 @@ class SecurityConfig(
                 it.requestMatchers(HttpMethod.POST, "/appointment/{slug}/links").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/appointment/verify").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/client/appointment/{appointmentId}").hasRole("CLIENT")
+                it.requestMatchers(HttpMethod.GET, "/client/appointment/{appointmentId}/messages").hasRole("CLIENT")
                 it.anyRequest().hasRole("ARTIST")
             }
             .oauth2ResourceServer {
