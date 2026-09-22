@@ -9,6 +9,7 @@ import com.inkvite.inkviteback.auth.artist.event.PasswordChangedEmailRequested
 import com.inkvite.inkviteback.auth.artist.event.PasswordResetEmailRequested
 import com.inkvite.inkviteback.auth.client.event.ClientAccessCodeRequested
 import com.inkvite.inkviteback.discussion.event.NewMessageEmailRequested
+import com.inkvite.inkviteback.discussion.event.NewMessageToArtistEmailRequested
 import com.inkvite.inkviteback.email.service.EmailService
 import com.inkvite.inkviteback.support.event.SupportMessageConfirmationEmailRequested
 import com.inkvite.inkviteback.support.event.SupportMessageReceivedEmailRequested
@@ -59,6 +60,11 @@ class EmailEventListener(
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun on(event: NewMessageEmailRequested) {
         emailService.sendNewMessageEmailToClient(event.appointment)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun on(event: NewMessageToArtistEmailRequested) {
+        emailService.sendNewMessageEmailToArtist(event.appointment)
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)

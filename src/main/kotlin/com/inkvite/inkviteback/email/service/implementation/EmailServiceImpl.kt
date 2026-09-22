@@ -76,11 +76,8 @@ class EmailServiceImpl(
     override fun sendAppointmentNotificationEmail(appointment: Appointment) {
         val to = appointment.artist.email
         logger.debug("Sending appointment notification email to: $to")
-        val link = UriComponentsBuilder.fromUriString(baseUrl)
-            .path("/dashboard")
-            .toUriString()
         val variables = mapOf(
-            "LINK" to link,
+            "LINK" to artistDashboardLink(),
             "ARTIST_NAME" to appointment.artist.artistName,
             "CLIENT_NAME" to appointment.client.getFullName()
         )
@@ -89,22 +86,31 @@ class EmailServiceImpl(
 
     override fun sendNewMessageEmailToClient(appointment: Appointment) {
         val to = appointment.client.email
-        logger.debug("Sending new message notification email to: $to")
+        logger.debug("Sending new message notification email to client: $to")
         val variables = mapOf(
+            "LINK" to clientAppointmentLink(appointment),
             "ARTIST_NAME" to appointment.artist.artistName,
             "CLIENT_FIRSTNAME" to appointment.client.firstName
         )
         resendEmailClient.sendEmail(to, "notify-client-new-message", variables)
     }
 
+    override fun sendNewMessageEmailToArtist(appointment: Appointment) {
+        val to = appointment.artist.email
+        logger.debug("Sending new message notification email to artist: $to")
+        val variables = mapOf(
+            "LINK" to artistDashboardLink(),
+            "ARTIST_NAME" to appointment.artist.artistName,
+            "CLIENT_NAME" to appointment.client.getFullName()
+        )
+        resendEmailClient.sendEmail(to, "notify-artist-new-message", variables)
+    }
+
     override fun sendAppointmentRequestConfirmationEmail(appointment: Appointment) {
         val to = appointment.client.email
         logger.debug("Sending appointment confirmation email to: $to")
-        val link = UriComponentsBuilder.fromUriString(baseUrl)
-            .path("/appointment/${appointment.id}")
-            .toUriString()
         val variables = mapOf(
-            "LINK" to link,
+            "LINK" to clientAppointmentLink(appointment),
             "ARTIST_NAME" to appointment.artist.artistName,
             "CLIENT_FIRSTNAME" to appointment.client.firstName
         )
@@ -133,6 +139,18 @@ class EmailServiceImpl(
         )
         resendEmailClient.sendEmail(client.email, "retrieve-appointment-links", variables)
     }
+
+    /** The client-facing link to a single appointment's page (also carries its message thread). */
+    private fun clientAppointmentLink(appointment: Appointment): String =
+        UriComponentsBuilder.fromUriString(baseUrl)
+            .path("/appointment/${appointment.id}")
+            .toUriString()
+
+    /** The artist's dashboard link (no per-appointment deep link exists yet). */
+    private fun artistDashboardLink(): String =
+        UriComponentsBuilder.fromUriString(baseUrl)
+            .path("/dashboard")
+            .toUriString()
 
     private fun truncate(value: String): String =
         if (value.length > MAX_DESCRIPTION_LENGTH) value.take(MAX_DESCRIPTION_LENGTH).trimEnd() + "..." else value

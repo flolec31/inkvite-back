@@ -215,7 +215,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
                 .content("""{"imageKey":"$foreignKey"}""")
         )
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error").value("The image key does not belong to this artist"))
+            .andExpect(jsonPath("$.error").value("The image key does not belong to you"))
     }
 
     // --- POST /appointment/{appointmentId}/messages/image ---

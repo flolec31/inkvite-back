@@ -71,6 +71,8 @@ class SecurityConfig(
                 it.requestMatchers(HttpMethod.GET, "/appointment/verify").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/client/appointment/{appointmentId}").hasRole("CLIENT")
                 it.requestMatchers(HttpMethod.GET, "/client/appointment/{appointmentId}/messages").hasRole("CLIENT")
+                it.requestMatchers(HttpMethod.POST, "/client/appointment/{appointmentId}/messages").hasRole("CLIENT")
+                it.requestMatchers(HttpMethod.POST, "/client/appointment/{appointmentId}/messages/image").hasRole("CLIENT")
                 it.anyRequest().hasRole("ARTIST")
             }
             .oauth2ResourceServer {

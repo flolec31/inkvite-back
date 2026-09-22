@@ -110,7 +110,7 @@ class EmailServiceImplTest {
     }
 
     @Test
-    fun `sendNewMessageEmailToClient delegates to client with artist and client names`() {
+    fun `sendNewMessageEmailToClient builds access link and delegates to client`() {
         val appointment = buildAppointment(clientEmail = "client@test.com")
 
         emailService.sendNewMessageEmailToClient(appointment)
@@ -119,8 +119,26 @@ class EmailServiceImplTest {
             "client@test.com",
             "notify-client-new-message",
             mapOf(
+                "LINK" to "http://localhost:8080/appointment/${appointment.id}",
                 "ARTIST_NAME" to "Test Artist",
                 "CLIENT_FIRSTNAME" to "Jane"
+            )
+        )
+    }
+
+    @Test
+    fun `sendNewMessageEmailToArtist delegates to artist with artist and client names`() {
+        val appointment = buildAppointment(clientEmail = "client@test.com")
+
+        emailService.sendNewMessageEmailToArtist(appointment)
+
+        verify(resendEmailClient).sendEmail(
+            appointment.artist.email,
+            "notify-artist-new-message",
+            mapOf(
+                "LINK" to "http://localhost:8080/dashboard",
+                "ARTIST_NAME" to "Test Artist",
+                "CLIENT_NAME" to "Jane Doe"
             )
         )
     }

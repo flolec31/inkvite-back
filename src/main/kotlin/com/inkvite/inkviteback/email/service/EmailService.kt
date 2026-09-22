@@ -25,6 +25,9 @@ interface EmailService {
     /** Sent to the client when the artist posts a new message in their appointment's discussion thread. */
     fun sendNewMessageEmailToClient(appointment: Appointment)
 
+    /** Sent to the artist when the client posts a new message in their appointment's discussion thread. */
+    fun sendNewMessageEmailToArtist(appointment: Appointment)
+
     /** Sent to a client who asks to retrieve their access links with a given artist (one link per appointment). */
     fun sendAppointmentLinksEmail(appointments: List<Appointment>)
 
