@@ -143,6 +143,24 @@ class DiscussionClientIntegrationTest : AbstractAppointmentIntegrationTest() {
             .andExpect(jsonPath("$.length()").value(0))
     }
 
+    @Test
+    fun `get client messages marks the artist messages read and leaves the client own unread`() {
+        val artist = createActivatedArtist()
+        val client = createClient()
+        val appointment = createAppointment(artist, client)
+        saveMessage(appointment, MessageSender.ARTIST, content = "from artist")
+        saveMessage(appointment, MessageSender.CLIENT, content = "from client")
+        val token = jwtService.generateAccessToken(client.id, Role.CLIENT)
+
+        mockMvc.perform(
+            get("/client/appointment/${appointment.id}/messages").header("Authorization", "Bearer $token")
+        ).andExpect(status().isOk)
+
+        val persisted = messageRepository.findByAppointmentIdOrderBySentAtAsc(appointment.id)
+        assertThat(persisted.single { it.sender == MessageSender.ARTIST }.readAt).isNotNull()
+        assertThat(persisted.single { it.sender == MessageSender.CLIENT }.readAt).isNull()
+    }
+
     // --- POST /client/appointment/{appointmentId}/messages ---
 
     @Test

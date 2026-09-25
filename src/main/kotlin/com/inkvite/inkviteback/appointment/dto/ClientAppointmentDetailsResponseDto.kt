@@ -18,10 +18,12 @@ data class ClientAppointmentDetailsResponseDto(
     val receivedAt: LocalDate,
     val references: List<ReferenceDetailsResponseDto>,
     val artistName: String,
+    val unreadMessages: Boolean
 ) {
     constructor(
         appointment: Appointment,
-        references: List<ReferenceDetailsResponseDto>
+        references: List<ReferenceDetailsResponseDto>,
+        unreadMessages: Boolean
     ) : this(
         id = appointment.id,
         tattooDescription = appointment.tattooDescription,
@@ -34,5 +36,6 @@ data class ClientAppointmentDetailsResponseDto(
         receivedAt = LocalDate.ofInstant(appointment.verifiedAt, ZoneId.of("UTC")),
         references = references,
         artistName = appointment.artist.artistName,
+        unreadMessages = unreadMessages
     )
 }

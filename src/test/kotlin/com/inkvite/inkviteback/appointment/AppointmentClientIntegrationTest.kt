@@ -3,6 +3,8 @@ package com.inkvite.inkviteback.appointment
 import com.inkvite.inkviteback.appointment.entity.Reference
 import com.inkvite.inkviteback.auth.Role
 import com.inkvite.inkviteback.auth.service.JwtService
+import com.inkvite.inkviteback.discussion.entity.Message
+import com.inkvite.inkviteback.discussion.entity.MessageSender
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
@@ -100,6 +102,22 @@ class AppointmentClientIntegrationTest : AbstractAppointmentIntegrationTest() {
             .andExpect(jsonPath("$.clientName").doesNotExist())
             .andExpect(jsonPath("$.new").doesNotExist())
             .andExpect(jsonPath("$.archived").doesNotExist())
+            .andExpect(jsonPath("$.unreadMessages").value(false))
+    }
+
+    @Test
+    fun `get client appointment flags unreadMessages when there is an unread artist message`() {
+        val artist = createActivatedArtist()
+        val client = createClient()
+        val appointment = createAppointment(artist, client)
+        messageRepository.save(Message(appointment = appointment, sender = MessageSender.ARTIST, content = "hi"))
+        val token = jwtService.generateAccessToken(client.id, Role.CLIENT)
+
+        mockMvc.perform(
+            get("/client/appointment/${appointment.id}").header("Authorization", "Bearer $token")
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.unreadMessages").value(true))
     }
 
     @Test

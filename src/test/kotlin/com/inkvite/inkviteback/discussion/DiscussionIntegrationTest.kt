@@ -7,6 +7,7 @@ import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.auth.Role
 import com.inkvite.inkviteback.auth.service.JwtService
 import com.inkvite.inkviteback.client.entity.TattooClient
+import com.inkvite.inkviteback.discussion.entity.Message
 import com.inkvite.inkviteback.discussion.entity.MessageSender
 import com.inkvite.inkviteback.email.service.EmailService
 import org.assertj.core.api.Assertions.assertThat
@@ -299,7 +300,7 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
         val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val appointment = saveVerifiedAppointment(artist)
         messageRepository.save(
-            com.inkvite.inkviteback.discussion.entity.Message(
+            Message(
                 appointment = appointment,
                 sender = MessageSender.ARTIST,
                 content = null,
@@ -354,5 +355,21 @@ class DiscussionIntegrationTest : AbstractAppointmentIntegrationTest() {
 
         mockMvc.perform(get("/appointment/${appointment.id}/messages").header("Authorization", "Bearer $token"))
             .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `get messages marks the client messages read and leaves the artist own unread`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
+        val appointment = saveVerifiedAppointment(artist)
+        messageRepository.save(Message(appointment = appointment, sender = MessageSender.CLIENT, content = "from client"))
+        messageRepository.save(Message(appointment = appointment, sender = MessageSender.ARTIST, content = "from artist"))
+
+        mockMvc.perform(get("/appointment/${appointment.id}/messages").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+
+        val persisted = messageRepository.findByAppointmentIdOrderBySentAtAsc(appointment.id)
+        assertThat(persisted.single { it.sender == MessageSender.CLIENT }.readAt).isNotNull()
+        assertThat(persisted.single { it.sender == MessageSender.ARTIST }.readAt).isNull()
     }
 }

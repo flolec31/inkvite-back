@@ -6,6 +6,8 @@ import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.auth.Role
 import com.inkvite.inkviteback.auth.service.JwtService
 import com.inkvite.inkviteback.client.entity.TattooClient
+import com.inkvite.inkviteback.discussion.entity.Message
+import com.inkvite.inkviteback.discussion.entity.MessageSender
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -94,6 +96,33 @@ class AppointmentManagementIntegrationTest : AbstractAppointmentIntegrationTest(
             .andExpect(jsonPath("$.content[0].receivedAt").isString)
             .andExpect(jsonPath("$.content[0].new").value(true))
             .andExpect(jsonPath("$.content[0].archived").value(false))
+            .andExpect(jsonPath("$.content[0].unreadMessages").value(false))
+    }
+
+    @Test
+    fun `get appointments list flags unread when there is an unread client message`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
+        val appointment = saveVerifiedAppointment(artist)
+        messageRepository.save(Message(appointment = appointment, sender = MessageSender.CLIENT, content = "hi"))
+
+        mockMvc.perform(get("/appointment").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content[0].id").value(appointment.id.toString()))
+            .andExpect(jsonPath("$.content[0].unreadMessages").value(true))
+    }
+
+    @Test
+    fun `get appointments list does not flag unread for read client messages or artist-only threads`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
+        val appointment = saveVerifiedAppointment(artist)
+        messageRepository.save(Message(appointment = appointment, sender = MessageSender.CLIENT, content = "seen", readAt = Instant.now()))
+        messageRepository.save(Message(appointment = appointment, sender = MessageSender.ARTIST, content = "reply"))
+
+        mockMvc.perform(get("/appointment").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content[0].unreadMessages").value(false))
     }
 
     @Test
@@ -212,6 +241,19 @@ class AppointmentManagementIntegrationTest : AbstractAppointmentIntegrationTest(
             .andExpect(jsonPath("$.references").isArray)
             .andExpect(jsonPath("$.new").value(false))
             .andExpect(jsonPath("$.archived").value(false))
+            .andExpect(jsonPath("$.unreadMessages").value(false))
+    }
+
+    @Test
+    fun `get appointment details flags unreadMessages when there is an unread client message`() {
+        val artist = createActivatedArtist()
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
+        val appointment = saveVerifiedAppointment(artist)
+        messageRepository.save(Message(appointment = appointment, sender = MessageSender.CLIENT, content = "hi"))
+
+        mockMvc.perform(get("/appointment/${appointment.id}").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.unreadMessages").value(true))
     }
 
     @Test

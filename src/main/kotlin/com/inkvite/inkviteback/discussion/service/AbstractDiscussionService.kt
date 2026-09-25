@@ -11,6 +11,7 @@ import com.inkvite.inkviteback.storage.service.ImageUploadService
 import com.inkvite.inkviteback.storage.service.StorageService
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
+import java.time.Instant
 import java.util.UUID
 
 /**
@@ -30,14 +31,24 @@ abstract class AbstractDiscussionService(
 
     protected abstract val sender: MessageSender
 
+    /** The party whose messages this side reads (and thus marks read on fetch). */
+    private val counterpartSender: MessageSender
+        get() = when (sender) {
+            MessageSender.ARTIST -> MessageSender.CLIENT
+            MessageSender.CLIENT -> MessageSender.ARTIST
+        }
+
     protected abstract fun resolveAppointment(subjectId: UUID, appointmentId: UUID): Appointment
 
     protected abstract fun onMessagePosted(appointment: Appointment)
 
+    @Transactional
     override fun getMessages(subjectId: UUID, appointmentId: UUID): List<MessageResponseDto> {
         resolveAppointment(subjectId, appointmentId)
-        return messageRepository.findByAppointmentIdOrderBySentAtAsc(appointmentId)
-            .map { MessageResponseDto(it, it.imageKey?.let(storageService::getSignedUrl)) }
+        val messages = messageRepository.findByAppointmentIdOrderBySentAtAsc(appointmentId)
+        val now = Instant.now()
+        messages.forEach { if (it.sender == counterpartSender && it.readAt == null) it.readAt = now }
+        return messages.map { MessageResponseDto(it, it.imageKey?.let(storageService::getSignedUrl)) }
     }
 
     override fun uploadMessageImage(
