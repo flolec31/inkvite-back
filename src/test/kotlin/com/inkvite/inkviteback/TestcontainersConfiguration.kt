@@ -18,7 +18,7 @@ import java.net.URI
 class TestcontainersConfiguration {
 
     companion object {
-        val minioContainer: MinIOContainer = MinIOContainer("minio/minio:latest")
+        val minioContainer: MinIOContainer = MinIOContainer("minio/minio:RELEASE.2023-09-04T19-57-37Z")
             .also { container ->
                 container.start()
                 S3Client.builder()
