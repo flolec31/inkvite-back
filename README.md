@@ -10,16 +10,16 @@ Backend API for **Inkvite** — a tattoo appointment booking platform. Artists r
 - Kotlin + Spring Boot 4 + Java 24
 - PostgreSQL (Spring Data JPA + Liquibase migrations)
 - JWT authentication (HMAC-SHA256, stateless, refresh tokens in DB)
-- S3-compatible object storage via AWS SDK v2 (MinIO locally)
+- S3-compatible object storage via AWS SDK v2 (adobe/s3mock locally)
 - Transactional email via [Resend](https://resend.com)
 - Gradle (Kotlin DSL) with a version catalog (`gradle/libs.versions.toml`)
 
 ## Running locally
 
-**Prerequisites:** Docker (for Postgres + MinIO via Compose), JDK 24.
+**Prerequisites:** Docker (for Postgres + s3mock via Compose), JDK 24.
 
 ```bash
-# Start Postgres + MinIO
+# Start Postgres + s3mock
 docker compose up -d
 
 # Run the app (picks up application-local.yaml for secrets)
@@ -55,7 +55,7 @@ Alternatively, run with Testcontainers (no Docker Compose needed):
 ./gradlew test
 ```
 
-Tests spin up Postgres and MinIO via Testcontainers automatically. `EmailService` is mocked — no real emails are sent.
+Tests spin up Postgres and s3mock via Testcontainers automatically. `EmailService` is mocked — no real emails are sent.
 
 ## API overview
 
@@ -101,7 +101,7 @@ Swagger UI is disabled in production (`springdoc.swagger-ui.enabled: false`). En
 | `APP_EMAIL_FROM`                 | Sender address (default: `noreply@inkvite.me`)          |
 | `APP_SUPPORT_NOTIFICATION_EMAIL` | Recipient for new support/contact message notifications |
 | `RESEND_API_KEY`                 | Resend API key                                          |
-| `APP_STORAGE_ENDPOINT`           | S3/MinIO endpoint URL                                   |
+| `APP_STORAGE_ENDPOINT`           | S3-compatible endpoint URL                              |
 | `APP_STORAGE_BUCKET`             | Bucket name                                             |
 | `APP_STORAGE_ACCESS_KEY`         | Storage access key                                      |
 | `APP_STORAGE_SECRET_KEY`         | Storage secret key                                      |

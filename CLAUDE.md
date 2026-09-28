@@ -65,10 +65,10 @@ This is a Spring Boot application using Kotlin + Spring Boot 4 + Java 24 + Gradl
 - `support` — `SupportMessage` entity/enum, repository, service, controller: artist-submitted contact/support messages (bug/help/idea/other), with optional screenshot via `storage.ImageUploadService`. Submitting publishes `SupportMessageReceivedEmailRequested` (notifies `app.support.notification-email`, env `APP_SUPPORT_NOTIFICATION_EMAIL`) and `SupportMessageConfirmationEmailRequested` (confirms receipt to the submitting artist).
 
 **Testing approach:**
-- Tests use Testcontainers for PostgreSQL **and MinIO** via `TestcontainersConfiguration` (in `src/test`), imported with `@Import(TestcontainersConfiguration::class)`. MinIO container is started and its S3 URL, access key, and secret key are injected via `DynamicPropertyRegistry`.
+- Tests use Testcontainers for PostgreSQL **and an S3-compatible store** (`adobe/s3mock`, pinned tag) via `TestcontainersConfiguration` (in `src/test`), imported with `@Import(TestcontainersConfiguration::class)`. s3mock runs as a `GenericContainer` (no dedicated Testcontainers module) on port 9090; the `inkvite` bucket is created via the AWS SDK, and endpoint/access-key/secret-key are injected via `DynamicPropertyRegistry` (also exposed as `s3Endpoint`/`s3AccessKey`/`s3SecretKey` for tests that build their own `S3Client`). Any credentials are accepted.
 - `TestInkviteBackApplication` allows running the full app locally with Testcontainers in place of a real database.
 - Integration tests use `@SpringBootTest` + `@AutoConfigureMockMvc`; external services (e.g. `EmailService`) are `@MockitoBean`.
-- Docker Compose (`compose.yaml`) runs Postgres 17 + MinIO for manual dev; not used in tests.
+- Docker Compose (`compose.yaml`) runs Postgres 17 + `adobe/s3mock` for manual dev; not used in tests. s3mock's port 9090 is mapped to host 9000 so `application-local.yaml`'s `http://localhost:9000` endpoint is unchanged, and `COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS=inkvite` auto-creates the bucket on startup.
 
 **Kotlin compiler flags:**
 - `-Xjsr305=strict`: null-safety annotations from Java are treated as strict.
@@ -83,4 +83,4 @@ This is a Spring Boot application using Kotlin + Spring Boot 4 + Java 24 + Gradl
 
 - **SonarCloud**: project `flolec31_inkvite-back`, org `florianleca` — tracks code quality on the main branch and decorates PRs. Requires `SONAR_TOKEN` secret in GitHub.
 - **Resend**: transactional email provider. API key stored in `application-local.yaml` (gitignored). See `ResendConfig` for the `@ConfigurationProperties` binding.
-- **MinIO / S3**: object storage for appointment reference photos and artist profile photos. Endpoint, bucket, access key, and secret key are all configured via `app.storage.*` properties (env vars: `APP_STORAGE_ENDPOINT`, `APP_STORAGE_BUCKET`, `APP_STORAGE_ACCESS_KEY`, `APP_STORAGE_SECRET_KEY`). Local dev uses the MinIO service in `compose.yaml` (API on port 9000, console on 9001).
+- **S3-compatible object storage** for appointment reference photos and artist profile photos. Endpoint, bucket, access key, and secret key are all configured via `app.storage.*` properties (env vars: `APP_STORAGE_ENDPOINT`, `APP_STORAGE_BUCKET`, `APP_STORAGE_ACCESS_KEY`, `APP_STORAGE_SECRET_KEY`). Local dev and tests use `adobe/s3mock` (see `compose.yaml` / `TestcontainersConfiguration`); the app speaks the plain S3 API (AWS SDK v2, path-style access), so any S3-compatible service works at runtime.

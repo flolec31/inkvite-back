@@ -44,13 +44,15 @@ class TattooArtistIntegrationTest : AbstractIntegrationTest() {
     lateinit var bucket: String
 
     private val s3Client: S3Client by lazy {
-        val container = TestcontainersConfiguration.minioContainer
         S3Client.builder()
-            .endpointOverride(URI.create(container.s3URL))
+            .endpointOverride(URI.create(TestcontainersConfiguration.s3Endpoint))
             .region(Region.EU_WEST_3)
             .credentialsProvider(
                 StaticCredentialsProvider.create(
-                    AwsBasicCredentials.create(container.userName, container.password)
+                    AwsBasicCredentials.create(
+                        TestcontainersConfiguration.s3AccessKey,
+                        TestcontainersConfiguration.s3SecretKey
+                    )
                 )
             )
             .forcePathStyle(true)
