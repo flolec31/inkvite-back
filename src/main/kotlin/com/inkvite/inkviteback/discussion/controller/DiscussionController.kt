@@ -5,6 +5,7 @@ import com.inkvite.inkviteback.discussion.dto.MessageResponseDto
 import com.inkvite.inkviteback.discussion.service.DiscussionService
 import com.inkvite.inkviteback.storage.dto.ImageUploadResponseDto
 import jakarta.validation.Valid
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
@@ -15,7 +16,7 @@ import java.util.UUID
 @RestController
 @RequestMapping("/appointment")
 class DiscussionController(
-    private val discussionService: DiscussionService,
+    @Qualifier("discussionServiceImpl") private val discussionService: DiscussionService,
 ) {
 
     @GetMapping("/{appointmentId}/messages")

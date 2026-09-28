@@ -93,7 +93,24 @@ class EmailServiceImplTest {
     }
 
     @Test
-    fun `sendNewMessageEmailToClient delegates to client with artist and client names`() {
+    fun `sendAppointmentRequestConfirmationEmail builds access link and delegates to client`() {
+        val appointment = buildAppointment(clientEmail = "client@test.com")
+
+        emailService.sendAppointmentRequestConfirmationEmail(appointment)
+
+        verify(resendEmailClient).sendEmail(
+            "client@test.com",
+            "confirm-client-appointment-request",
+            mapOf(
+                "LINK" to "http://localhost:8080/appointment/${appointment.id}",
+                "ARTIST_NAME" to "Test Artist",
+                "CLIENT_FIRSTNAME" to "Jane"
+            )
+        )
+    }
+
+    @Test
+    fun `sendNewMessageEmailToClient builds access link and delegates to client`() {
         val appointment = buildAppointment(clientEmail = "client@test.com")
 
         emailService.sendNewMessageEmailToClient(appointment)
@@ -102,8 +119,26 @@ class EmailServiceImplTest {
             "client@test.com",
             "notify-client-new-message",
             mapOf(
+                "LINK" to "http://localhost:8080/appointment/${appointment.id}",
                 "ARTIST_NAME" to "Test Artist",
                 "CLIENT_FIRSTNAME" to "Jane"
+            )
+        )
+    }
+
+    @Test
+    fun `sendNewMessageEmailToArtist delegates to artist with artist and client names`() {
+        val appointment = buildAppointment(clientEmail = "client@test.com")
+
+        emailService.sendNewMessageEmailToArtist(appointment)
+
+        verify(resendEmailClient).sendEmail(
+            appointment.artist.email,
+            "notify-artist-new-message",
+            mapOf(
+                "LINK" to "http://localhost:8080/dashboard",
+                "ARTIST_NAME" to "Test Artist",
+                "CLIENT_NAME" to "Jane Doe"
             )
         )
     }
@@ -143,6 +178,92 @@ class EmailServiceImplTest {
     }
 
     @Test
+    fun `sendAppointmentLinksEmail builds one link per appointment and delegates to client`() {
+        val artist = buildArtist()
+        val client = TattooClient(email = "client@test.com", firstName = "Jane", lastName = "Doe")
+        val first = buildAppointment(
+            artist = artist,
+            client = client,
+            description = "A beautiful dragon tattoo",
+            submittedAt = Instant.parse("2026-09-09T10:00:00Z")
+        )
+        val second = buildAppointment(
+            artist = artist,
+            client = client,
+            description = "A small rose on the wrist",
+            submittedAt = Instant.parse("2026-03-01T08:00:00Z")
+        )
+
+        emailService.sendAppointmentLinksEmail(listOf(first, second))
+
+        verify(resendEmailClient).sendEmail(
+            "client@test.com",
+            "retrieve-appointment-links",
+            mapOf(
+                "ARTIST_NAME" to "Test Artist",
+                "CLIENT_FIRSTNAME" to "Jane",
+                "APPOINTMENTS_HTML" to (
+                    "<ul>" +
+                        "<li><a href=\"http://localhost:8080/appointment/${first.id}\">09/09/26 &ndash; &laquo; A beautiful dragon tattoo &raquo;</a></li>" +
+                        "<li><a href=\"http://localhost:8080/appointment/${second.id}\">01/03/26 &ndash; &laquo; A small rose on the wrist &raquo;</a></li>" +
+                        "</ul>"
+                    )
+            )
+        )
+    }
+
+    @Test
+    fun `sendAppointmentLinksEmail escapes HTML in the tattoo description`() {
+        val appointment = buildAppointment(
+            description = "A <script> & \"quotes\"",
+            submittedAt = Instant.parse("2026-09-09T10:00:00Z")
+        )
+
+        emailService.sendAppointmentLinksEmail(listOf(appointment))
+
+        verify(resendEmailClient).sendEmail(
+            "client@test.com",
+            "retrieve-appointment-links",
+            mapOf(
+                "ARTIST_NAME" to "Test Artist",
+                "CLIENT_FIRSTNAME" to "Jane",
+                "APPOINTMENTS_HTML" to (
+                    "<ul>" +
+                        "<li><a href=\"http://localhost:8080/appointment/${appointment.id}\">" +
+                        "09/09/26 &ndash; &laquo; A &lt;script&gt; &amp; &quot;quotes&quot; &raquo;</a></li>" +
+                        "</ul>"
+                    )
+            )
+        )
+    }
+
+    @Test
+    fun `sendAppointmentLinksEmail truncates a long tattoo description to 100 chars with an ellipsis`() {
+        val longDescription = "x".repeat(120)
+        val appointment = buildAppointment(
+            description = longDescription,
+            submittedAt = Instant.parse("2026-09-09T10:00:00Z")
+        )
+
+        emailService.sendAppointmentLinksEmail(listOf(appointment))
+
+        verify(resendEmailClient).sendEmail(
+            "client@test.com",
+            "retrieve-appointment-links",
+            mapOf(
+                "ARTIST_NAME" to "Test Artist",
+                "CLIENT_FIRSTNAME" to "Jane",
+                "APPOINTMENTS_HTML" to (
+                    "<ul>" +
+                        "<li><a href=\"http://localhost:8080/appointment/${appointment.id}\">" +
+                        "09/09/26 &ndash; &laquo; ${"x".repeat(100)}... &raquo;</a></li>" +
+                        "</ul>"
+                    )
+            )
+        )
+    }
+
+    @Test
     fun `sendSupportMessageConfirmationEmail delegates to client`() {
         emailService.sendSupportMessageConfirmationEmail("artist@test.com", "Test Artist")
 
@@ -153,32 +274,35 @@ class EmailServiceImplTest {
         )
     }
 
+    private fun buildArtist(email: String = "artist@test.com") = TattooArtist(
+        id = UUID.randomUUID(),
+        email = email,
+        password = "hashed",
+        artistName = "Test Artist",
+        slug = "test-artist",
+        city = "Test City",
+        countryCode = "FR",
+        registeredAt = Instant.now(),
+        activatedAt = Instant.now()
+    )
+
     private fun buildAppointment(
         clientEmail: String = "client@test.com",
-        artistEmail: String = "artist@test.com"
-    ): Appointment {
-        val artist = TattooArtist(
-            id = UUID.randomUUID(),
-            email = artistEmail,
-            password = "hashed",
-            artistName = "Test Artist",
-            slug = "test-artist",
-            city = "Test City",
-            countryCode = "FR",
-            registeredAt = Instant.now(),
-            activatedAt = Instant.now()
-        )
-        val client = TattooClient(email = clientEmail, firstName = "Jane", lastName = "Doe")
-        return Appointment(
-            artist = artist,
-            client = client,
-            tattooDescription = "A beautiful dragon tattoo",
-            tattooPlacement = "forearm",
-            tattooSize = "10x10cm",
-            firstTattoo = false,
-            coverUp = false,
-            color = false,
-            style = TattooStyle.REALISM
-        )
-    }
+        artistEmail: String = "artist@test.com",
+        artist: TattooArtist = buildArtist(artistEmail),
+        client: TattooClient = TattooClient(email = clientEmail, firstName = "Jane", lastName = "Doe"),
+        description: String = "A beautiful dragon tattoo",
+        submittedAt: Instant = Instant.now()
+    ): Appointment = Appointment(
+        artist = artist,
+        client = client,
+        tattooDescription = description,
+        tattooPlacement = "forearm",
+        tattooSize = "10x10cm",
+        firstTattoo = false,
+        coverUp = false,
+        color = false,
+        style = TattooStyle.REALISM,
+        submittedAt = submittedAt
+    )
 }

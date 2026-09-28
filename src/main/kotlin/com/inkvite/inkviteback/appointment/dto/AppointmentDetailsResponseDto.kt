@@ -19,11 +19,13 @@ data class AppointmentDetailsResponseDto(
     val references: List<ReferenceDetailsResponseDto>,
     val clientName: String,
     val new: Boolean,
-    val archived: Boolean
+    val archived: Boolean,
+    val unreadMessages: Boolean
 ) {
     constructor(
         appointment: Appointment,
-        references: List<ReferenceDetailsResponseDto>
+        references: List<ReferenceDetailsResponseDto>,
+        unreadMessages: Boolean
     ) : this(
         id = appointment.id,
         tattooDescription = appointment.tattooDescription,
@@ -37,6 +39,7 @@ data class AppointmentDetailsResponseDto(
         references = references,
         clientName = appointment.client.getFullName(),
         new = appointment.new,
-        archived = appointment.archived
+        archived = appointment.archived,
+        unreadMessages = unreadMessages
     )
 }

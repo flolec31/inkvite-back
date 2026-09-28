@@ -4,7 +4,9 @@ import com.inkvite.inkviteback.appointment.entity.TattooStyle
 import com.inkvite.inkviteback.email.service.EmailService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
 import org.mockito.kotlin.argThat
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
@@ -15,6 +17,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import tools.jackson.databind.ObjectMapper
+import java.time.Instant
 import java.util.*
 
 class AppointmentSubmissionIntegrationTest : AbstractAppointmentIntegrationTest() {
@@ -263,9 +266,134 @@ class AppointmentSubmissionIntegrationTest : AbstractAppointmentIntegrationTest(
     }
 
     @Test
+    fun `verify appointment form sends confirmation email with access link to client`() {
+        val artist = createActivatedArtist()
+        mockMvc.perform(
+            post("/appointment/${artist.slug}")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validFormBody()))
+        )
+        val form = appointmentRepository.findAll().single()
+
+        mockMvc.perform(get("/appointment/verify").param("appointmentId", form.id.toString()))
+            .andExpect(status().isNoContent)
+
+        verify(emailService).sendAppointmentRequestConfirmationEmail(argThat { id == form.id })
+    }
+
+    @Test
     fun `verify appointment form with unknown id returns 404`() {
         mockMvc.perform(get("/appointment/verify").param("appointmentId", UUID.randomUUID().toString()))
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.error").value("Appointment not found"))
+    }
+
+    // --- POST /appointment/{slug}/links ---
+
+    private fun requestLinks(slug: String, email: String) =
+        mockMvc.perform(
+            post("/appointment/$slug/links")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mapOf("email" to email)))
+        )
+
+    @Test
+    fun `request links returns 204 and emails verified appointments including archived ones`() {
+        val artist = createActivatedArtist()
+        val client = createClient("client@test.com")
+        val active = createAppointment(artist, client, description = "Dragon")
+        val archived = createAppointment(artist, client, archived = true, description = "Old rose")
+
+        requestLinks(artist.slug, "client@test.com").andExpect(status().isNoContent)
+
+        verify(emailService).sendAppointmentLinksEmail(argThat {
+            map { it.id }.toSet() == setOf(active.id, archived.id)
+        })
+    }
+
+    @Test
+    fun `request links emails appointments most recent first`() {
+        val artist = createActivatedArtist()
+        val client = createClient("client@test.com")
+        val older = createAppointment(artist, client, submittedAt = Instant.parse("2026-01-01T10:00:00Z"))
+        val newer = createAppointment(artist, client, submittedAt = Instant.parse("2026-06-01T10:00:00Z"))
+
+        requestLinks(artist.slug, "client@test.com").andExpect(status().isNoContent)
+
+        verify(emailService).sendAppointmentLinksEmail(argThat {
+            map { it.id } == listOf(newer.id, older.id)
+        })
+    }
+
+    @Test
+    fun `request links matches email case-insensitively`() {
+        val artist = createActivatedArtist()
+        val client = createClient("client@test.com")
+        createAppointment(artist, client)
+
+        requestLinks(artist.slug, "CLIENT@TEST.COM").andExpect(status().isNoContent)
+
+        verify(emailService).sendAppointmentLinksEmail(argThat { size == 1 })
+    }
+
+    @Test
+    fun `request links returns 204 and sends no email when no appointments match`() {
+        val artist = createActivatedArtist()
+
+        requestLinks(artist.slug, "nobody@test.com").andExpect(status().isNoContent)
+
+        verify(emailService, never()).sendAppointmentLinksEmail(any())
+    }
+
+    @Test
+    fun `request links excludes unverified appointments`() {
+        val artist = createActivatedArtist()
+        val client = createClient("client@test.com")
+        val verified = createAppointment(artist, client, description = "Verified one")
+        createAppointment(artist, client, verifiedAt = null, description = "Unverified one")
+
+        requestLinks(artist.slug, "client@test.com").andExpect(status().isNoContent)
+
+        verify(emailService).sendAppointmentLinksEmail(argThat {
+            map { it.id } == listOf(verified.id)
+        })
+    }
+
+    @Test
+    fun `request links sends no email when only unverified appointments exist`() {
+        val artist = createActivatedArtist()
+        val client = createClient("client@test.com")
+        createAppointment(artist, client, verifiedAt = null)
+
+        requestLinks(artist.slug, "client@test.com").andExpect(status().isNoContent)
+
+        verify(emailService, never()).sendAppointmentLinksEmail(any())
+    }
+
+    @Test
+    fun `request links only includes appointments with the given artist`() {
+        val artist = createActivatedArtist("artist-a")
+        val otherArtist = createActivatedArtist("artist-b")
+        val client = createClient("client@test.com")
+        val withArtist = createAppointment(artist, client, description = "With A")
+        createAppointment(otherArtist, client, description = "With B")
+
+        requestLinks(artist.slug, "client@test.com").andExpect(status().isNoContent)
+
+        verify(emailService).sendAppointmentLinksEmail(argThat {
+            map { it.id } == listOf(withArtist.id)
+        })
+    }
+
+    @Test
+    fun `request links for unknown slug returns 404`() {
+        requestLinks("unknown-slug", "client@test.com").andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `request links with invalid email returns 400`() {
+        createActivatedArtist()
+
+        requestLinks("test-artist", "not-an-email").andExpect(status().isBadRequest)
     }
 }

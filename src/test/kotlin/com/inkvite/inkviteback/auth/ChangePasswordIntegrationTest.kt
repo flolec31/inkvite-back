@@ -3,8 +3,8 @@ package com.inkvite.inkviteback.auth
 import com.inkvite.inkviteback.AbstractIntegrationTest
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
-import com.inkvite.inkviteback.auth.dto.ChangePasswordRequestDto
-import com.inkvite.inkviteback.auth.dto.LoginRequestDto
+import com.inkvite.inkviteback.auth.artist.dto.ChangePasswordRequestDto
+import com.inkvite.inkviteback.auth.artist.dto.LoginRequestDto
 import com.inkvite.inkviteback.auth.entity.RefreshToken
 import com.inkvite.inkviteback.auth.repository.RefreshTokenRepository
 import com.inkvite.inkviteback.auth.service.JwtService
@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import tools.jackson.databind.ObjectMapper
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class ChangePasswordIntegrationTest : AbstractIntegrationTest() {
@@ -59,16 +60,16 @@ class ChangePasswordIntegrationTest : AbstractIntegrationTest() {
         )
     }
 
-    private fun accessToken() = jwtService.generateAccessToken(artistId)
+    private fun accessToken() = jwtService.generateAccessToken(artistId, Role.ARTIST)
 
     @Test
     fun `change password with correct current password updates password, wipes refresh tokens, and returns new tokens`() {
         // seed two existing refresh tokens to verify they are wiped
-        refreshTokenRepository.save(RefreshToken(tattooArtistId = artistId))
-        refreshTokenRepository.save(RefreshToken(tattooArtistId = artistId))
+        refreshTokenRepository.save(RefreshToken(subjectId = artistId, subjectType = Role.ARTIST, expiresAt = Instant.now().plus(30, ChronoUnit.DAYS)))
+        refreshTokenRepository.save(RefreshToken(subjectId = artistId, subjectType = Role.ARTIST, expiresAt = Instant.now().plus(30, ChronoUnit.DAYS)))
 
         mockMvc.perform(
-            post("/auth/change-password")
+            post("/auth/artist/change-password")
                 .header("Authorization", "Bearer ${accessToken()}")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(ChangePasswordRequestDto("oldPassword1", "newPassword1")))
@@ -82,7 +83,7 @@ class ChangePasswordIntegrationTest : AbstractIntegrationTest() {
 
         // password actually changed — can log in with new password
         mockMvc.perform(
-            post("/auth/login")
+            post("/auth/artist/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(LoginRequestDto("artist@test.com", "newPassword1")))
         ).andExpect(status().isOk)
@@ -94,7 +95,7 @@ class ChangePasswordIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `change password with wrong current password returns 401`() {
         mockMvc.perform(
-            post("/auth/change-password")
+            post("/auth/artist/change-password")
                 .header("Authorization", "Bearer ${accessToken()}")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(ChangePasswordRequestDto("wrongPassword", "newPassword1")))
@@ -106,7 +107,7 @@ class ChangePasswordIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `change password with too short new password returns 400`() {
         mockMvc.perform(
-            post("/auth/change-password")
+            post("/auth/artist/change-password")
                 .header("Authorization", "Bearer ${accessToken()}")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(ChangePasswordRequestDto("oldPassword1", "short")))
@@ -117,7 +118,7 @@ class ChangePasswordIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `change password without authentication returns 401`() {
         mockMvc.perform(
-            post("/auth/change-password")
+            post("/auth/artist/change-password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(ChangePasswordRequestDto("oldPassword1", "newPassword1")))
         )

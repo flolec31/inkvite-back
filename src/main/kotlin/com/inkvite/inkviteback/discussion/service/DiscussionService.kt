@@ -5,8 +5,12 @@ import com.inkvite.inkviteback.storage.dto.ImageUploadResponseDto
 import org.springframework.web.multipart.MultipartFile
 import java.util.UUID
 
+/**
+ * Appointment-scoped message thread, shared by both audiences. `subjectId` is the
+ * caller's id (a `TattooArtist` or a `TattooClient`), taken from the JWT subject.
+ */
 interface DiscussionService {
-    fun getMessages(artistId: UUID, appointmentId: UUID): List<MessageResponseDto>
-    fun postMessage(artistId: UUID, appointmentId: UUID, content: String?, imageKey: String?): MessageResponseDto
-    fun uploadMessageImage(artistId: UUID, appointmentId: UUID, image: MultipartFile): ImageUploadResponseDto
+    fun getMessages(subjectId: UUID, appointmentId: UUID): List<MessageResponseDto>
+    fun postMessage(subjectId: UUID, appointmentId: UUID, content: String?, imageKey: String?): MessageResponseDto
+    fun uploadMessageImage(subjectId: UUID, appointmentId: UUID, image: MultipartFile): ImageUploadResponseDto
 }

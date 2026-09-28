@@ -1,11 +1,15 @@
 package com.inkvite.inkviteback.email.event
 
+import com.inkvite.inkviteback.appointment.event.AppointmentRequestConfirmationEmailRequested
+import com.inkvite.inkviteback.appointment.event.AppointmentLinksRequested
 import com.inkvite.inkviteback.appointment.event.AppointmentNotificationEmailRequested
 import com.inkvite.inkviteback.appointment.event.AppointmentVerificationEmailRequested
-import com.inkvite.inkviteback.auth.event.ArtistVerificationEmailRequested
-import com.inkvite.inkviteback.auth.event.PasswordChangedEmailRequested
-import com.inkvite.inkviteback.auth.event.PasswordResetEmailRequested
+import com.inkvite.inkviteback.auth.artist.event.ArtistVerificationEmailRequested
+import com.inkvite.inkviteback.auth.artist.event.PasswordChangedEmailRequested
+import com.inkvite.inkviteback.auth.artist.event.PasswordResetEmailRequested
+import com.inkvite.inkviteback.auth.client.event.ClientAccessCodeRequested
 import com.inkvite.inkviteback.discussion.event.NewMessageEmailRequested
+import com.inkvite.inkviteback.discussion.event.NewMessageToArtistEmailRequested
 import com.inkvite.inkviteback.email.service.EmailService
 import com.inkvite.inkviteback.support.event.SupportMessageConfirmationEmailRequested
 import com.inkvite.inkviteback.support.event.SupportMessageReceivedEmailRequested
@@ -44,8 +48,23 @@ class EmailEventListener(
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun on(event: AppointmentRequestConfirmationEmailRequested) {
+        emailService.sendAppointmentRequestConfirmationEmail(event.appointment)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun on(event: AppointmentLinksRequested) {
+        emailService.sendAppointmentLinksEmail(event.appointments)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun on(event: NewMessageEmailRequested) {
         emailService.sendNewMessageEmailToClient(event.appointment)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun on(event: NewMessageToArtistEmailRequested) {
+        emailService.sendNewMessageEmailToArtist(event.appointment)
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -56,5 +75,10 @@ class EmailEventListener(
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun on(event: SupportMessageConfirmationEmailRequested) {
         emailService.sendSupportMessageConfirmationEmail(event.to, event.artistName)
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun on(event: ClientAccessCodeRequested) {
+        emailService.sendClientAccessCodeEmail(event.to, event.clientFirstName, event.code)
     }
 }

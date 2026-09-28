@@ -21,4 +21,13 @@ class AppointmentAccessServiceImpl(
         if (appointment.artist.id != artistId) throw AppointmentBelongsToAnotherArtistException()
         return appointment
     }
+
+    override fun findAppointmentForClient(clientId: UUID, appointmentId: UUID): Appointment {
+        val appointment = appointmentRepository.findByIdAndVerifiedAtNotNull(appointmentId)
+            .orElseThrow { AppointmentNotFoundException() }
+        // A client only ever knows about their own appointments: treat someone
+        // else's as non-existent rather than leaking that it exists.
+        if (appointment.client.id != clientId) throw AppointmentNotFoundException()
+        return appointment
+    }
 }

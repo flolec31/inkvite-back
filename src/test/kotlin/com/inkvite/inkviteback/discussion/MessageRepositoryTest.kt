@@ -15,7 +15,7 @@ import java.time.temporal.ChronoUnit
 class MessageRepositoryTest : AbstractAppointmentIntegrationTest() {
 
     private fun saveAppointment(artist: TattooArtist): Appointment {
-        val client = tattooClientRepository.save(TattooClient(email = "c@test.com", firstName = "Jane", lastName = "Doe"))
+        val client = tattooClientRepository.save(TattooClient(email = "c-${java.util.UUID.randomUUID()}@test.com", firstName = "Jane", lastName = "Doe"))
         return appointmentRepository.save(
             Appointment(
                 artist = artist, client = client,
@@ -46,5 +46,27 @@ class MessageRepositoryTest : AbstractAppointmentIntegrationTest() {
         val appointment = saveAppointment(artist)
 
         assertThat(messageRepository.findByAppointmentIdOrderBySentAtAsc(appointment.id)).isEmpty()
+    }
+
+    @Test
+    fun `findAppointmentIdsWithUnreadFrom returns only appointments with an unread message from the given sender`() {
+        val artist = createActivatedArtist()
+        val withUnreadClient = saveAppointment(artist)
+        val onlyReadClient = saveAppointment(artist)
+        val onlyArtist = saveAppointment(artist)
+
+        messageRepository.save(Message(appointment = withUnreadClient, sender = MessageSender.CLIENT, content = "hi"))
+        messageRepository.save(Message(appointment = onlyReadClient, sender = MessageSender.CLIENT, content = "seen", readAt = Instant.now()))
+        messageRepository.save(Message(appointment = onlyArtist, sender = MessageSender.ARTIST, content = "reply"))
+
+        val ids = listOf(withUnreadClient.id, onlyReadClient.id, onlyArtist.id)
+        val result = messageRepository.findAppointmentIdsWithUnreadFrom(ids, MessageSender.CLIENT)
+
+        assertThat(result).containsExactly(withUnreadClient.id)
+    }
+
+    @Test
+    fun `findAppointmentIdsWithUnreadFrom returns empty for empty input`() {
+        assertThat(messageRepository.findAppointmentIdsWithUnreadFrom(emptyList(), MessageSender.CLIENT)).isEmpty()
     }
 }

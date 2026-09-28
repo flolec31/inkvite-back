@@ -9,4 +9,5 @@ interface AppointmentSubmissionService {
     fun save(appointmentDto: AppointmentFormRequestDto, slug: String)
     fun uploadReference(slug: String, photo: MultipartFile): ImageUploadResponseDto
     fun verify(appointmentId: UUID)
+    fun requestLinks(slug: String, email: String)
 }

@@ -15,9 +15,10 @@ data class AppointmentItemResponseDto(
     val style: TattooStyle,
     val receivedAt: LocalDate,
     val new: Boolean,
-    val archived: Boolean
+    val archived: Boolean,
+    val unreadMessages: Boolean
 ) {
-    constructor(appointment: Appointment) : this(
+    constructor(appointment: Appointment, unreadMessages: Boolean) : this(
         id = appointment.id,
         description = appointment.tattooDescription,
         firstName = appointment.client.firstName,
@@ -26,6 +27,7 @@ data class AppointmentItemResponseDto(
         style = appointment.style,
         receivedAt = LocalDate.ofInstant(appointment.verifiedAt, ZoneId.of("UTC")),
         new = appointment.new,
-        archived = appointment.archived
+        archived = appointment.archived,
+        unreadMessages = unreadMessages
     )
 }

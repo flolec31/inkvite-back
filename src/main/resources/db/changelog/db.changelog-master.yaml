@@ -17,3 +17,5 @@ databaseChangeLog:
       path: db/changelog/50-sending-pictures-in-chat/
   - includeAll:
       path: db/changelog/52-color-and-styles/
+  - includeAll:
+      path: db/changelog/56-client-access/

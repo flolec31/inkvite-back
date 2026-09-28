@@ -3,6 +3,7 @@ package com.inkvite.inkviteback.support
 import com.inkvite.inkviteback.AbstractIntegrationTest
 import com.inkvite.inkviteback.artist.entity.TattooArtist
 import com.inkvite.inkviteback.artist.repository.TattooArtistRepository
+import com.inkvite.inkviteback.auth.Role
 import com.inkvite.inkviteback.auth.service.JwtService
 import com.inkvite.inkviteback.email.service.EmailService
 import com.inkvite.inkviteback.support.entity.SupportMessageType
@@ -65,7 +66,7 @@ class SupportMessageIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `upload screenshot returns 200 with key and signed url`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             multipart("/support/screenshot")
@@ -80,7 +81,7 @@ class SupportMessageIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `upload screenshot with invalid content type returns 400`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             multipart("/support/screenshot")
@@ -104,7 +105,7 @@ class SupportMessageIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `submit support message without screenshot returns 204 and persists`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             post("/support")
@@ -126,7 +127,7 @@ class SupportMessageIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `submit support message with screenshot persists key`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
         val screenshot = "contact-screenshots/${artist.id}/abc"
 
         mockMvc.perform(
@@ -143,7 +144,7 @@ class SupportMessageIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `submit support message with blank message returns 400`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             post("/support")
@@ -156,7 +157,7 @@ class SupportMessageIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `submit support message exceeding 1500 characters returns 400`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             post("/support")
@@ -169,7 +170,7 @@ class SupportMessageIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `submit support message with screenshot exceeding 1024 characters returns 400`() {
         val artist = createActivatedArtist()
-        val token = jwtService.generateAccessToken(artist.id)
+        val token = jwtService.generateAccessToken(artist.id, Role.ARTIST)
 
         mockMvc.perform(
             post("/support")
