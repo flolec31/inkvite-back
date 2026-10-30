@@ -19,7 +19,7 @@ app:
     secret: ${APP_JWT_SECRET}
     access-token-expiry: 900
   email:
-    from: ${APP_EMAIL_FROM:noreply@inkvite.me}
+    from: ${APP_EMAIL_FROM:Inkvite <contact@inkvite.fr>}
   support:
     notification-email: ${APP_SUPPORT_NOTIFICATION_EMAIL:}
   storage:
