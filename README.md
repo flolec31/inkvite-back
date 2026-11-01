@@ -1,7 +1,7 @@
 # inkvite-back
 
 [![CI](https://github.com/flolec31/inkvite-back/actions/workflows/ci.yml/badge.svg)](https://github.com/flolec31/inkvite-back/actions/workflows/ci.yml)
-[![CD](https://github.com/flolec31/inkvite-back/actions/workflows/cd.yml/badge.svg)](https://github.com/flolec31/inkvite-back/actions/workflows/cd.yml)
+[![Build & publish image](https://github.com/flolec31/inkvite-back/actions/workflows/publish.yml/badge.svg)](https://github.com/flolec31/inkvite-back/actions/workflows/publish.yml)
 
 Backend API for **Inkvite** — a tattoo appointment booking platform. Artists register and manage their profile; clients submit appointment requests through the artist's public booking page.
 
@@ -94,14 +94,42 @@ Swagger UI is disabled in production (`springdoc.swagger-ui.enabled: false`). En
 
 ## Environment variables
 
-| Variable                         | Description                                             |
-|----------------------------------|---------------------------------------------------------|
-| `APP_JWT_SECRET`                 | Base64-encoded HMAC-SHA256 secret (min 256 bits)        |
-| `APP_BASE_URL`                   | Public base URL of the API (used in emails)             |
-| `APP_EMAIL_FROM`                 | Sender address (default: `noreply@inkvite.me`)          |
-| `APP_SUPPORT_NOTIFICATION_EMAIL` | Recipient for new support/contact message notifications |
-| `RESEND_API_KEY`                 | Resend API key                                          |
-| `APP_STORAGE_ENDPOINT`           | S3-compatible endpoint URL                              |
-| `APP_STORAGE_BUCKET`             | Bucket name                                             |
-| `APP_STORAGE_ACCESS_KEY`         | Storage access key                                      |
-| `APP_STORAGE_SECRET_KEY`         | Storage secret key                                      |
+| Variable                         | Description                                                                     |
+|----------------------------------|---------------------------------------------------------------------------------|
+| `SPRING_DATASOURCE_URL`          | JDBC URL for the PostgreSQL database (`sslmode=require` in production)          |
+| `SPRING_DATASOURCE_USERNAME`     | Database username                                                               |
+| `SPRING_DATASOURCE_PASSWORD`     | Database password                                                               |
+| `APP_JWT_SECRET`                 | Base64-encoded HMAC-SHA256 secret (min 256 bits)                                |
+| `APP_BASE_URL`                   | Frontend base URL used to build email links (`/appointment/{id}`, `/dashboard`) |
+| `APP_CORS_ALLOWED_ORIGINS`       | Comma-separated list of allowed CORS origins                                    |
+| `APP_EMAIL_FROM`                 | Sender address (default: `noreply@inkvite.me`)                                  |
+| `APP_SUPPORT_NOTIFICATION_EMAIL` | Recipient for new support/contact message notifications                         |
+| `RESEND_API_KEY`                 | Resend API key                                                                  |
+| `APP_STORAGE_ENDPOINT`           | S3-compatible endpoint URL                                                      |
+| `APP_STORAGE_BUCKET`             | Bucket name                                                                     |
+| `APP_STORAGE_ACCESS_KEY`         | Storage access key                                                              |
+| `APP_STORAGE_SECRET_KEY`         | Storage secret key                                                              |
+
+## Deployment
+
+The app is containerised (`Dockerfile`) and deployed to a VPS as two containers
+(`inkvite-back` + a tunnel-based reverse proxy). The **Build & publish image** workflow (`publish.yml`)
+builds and pushes the image to GHCR on every push to `main`; releasing to the VPS is the separate
+**Deploy to VPS** workflow (`deploy.yml`), a **manual** `workflow_dispatch` run (choose `main`
+for the latest build, or `sha-<sha>` to pin/roll back). The deploy SSHes into the box, updates
+the image tag, runs `docker compose pull && up -d`, and waits for the `/actuator/health`
+healthcheck before finishing.
+
+The VPS's `~/app/docker-compose.yml` and `~/app/.env` are the single source of truth and are **not**
+mirrored here; the deploy job runs `docker compose pull/up` against whatever's on the box.
+
+**One-time setup** — in the repo (Settings → Secrets and variables → Actions): secrets `VPS_SSH_KEY`
+(deploy private key) and `VPS_KNOWN_HOSTS` (`ssh-keyscan <host>`); variables `VPS_HOST`, `VPS_USER`.
+On the VPS, `~/app/docker-compose.yml` must point the image at `ghcr.io/flolec31/inkvite-back:${IMAGE_TAG:-main}`,
+carry a `wget`-based `/actuator/health` healthcheck, and have the reverse-proxy sidecar depend on it
+with `condition: service_healthy`; `~/app/.env` (chmod 600) holds `IMAGE_TAG`, the tunnel token, and the
+runtime vars above (note: DB uses `SPRING_DATASOURCE_*`, not `DB_*`).
+
+**Deploy**: Actions → **Deploy to VPS** → **Run workflow** → `tag = main` (latest) or `sha-<sha>` (pin/rollback).
+The job rewrites `IMAGE_TAG` in `~/app/.env`, pulls, restarts, and fails if the container never
+reports healthy.

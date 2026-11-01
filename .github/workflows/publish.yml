@@ -1,11 +1,11 @@
-name: CD
+name: Build & publish image
 
 on:
   push:
     branches: [main]
 
 jobs:
-  docker:
+  build-and-push:
     name: Build & push Docker image
     runs-on: ubuntu-latest
 
