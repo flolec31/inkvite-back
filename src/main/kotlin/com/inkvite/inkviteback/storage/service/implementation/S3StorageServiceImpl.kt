@@ -31,7 +31,7 @@ class S3StorageServiceImpl(
     private val client: S3Client by lazy {
         S3Client.builder()
             .endpointOverride(URI.create(config.endpoint))
-            .region(Region.EU_WEST_3)
+            .region(Region.of(config.region))
             .credentialsProvider(credentials)
             .forcePathStyle(true)
             .build()
@@ -40,7 +40,7 @@ class S3StorageServiceImpl(
     private val presigner: S3Presigner by lazy {
         S3Presigner.builder()
             .endpointOverride(URI.create(config.endpoint))
-            .region(Region.EU_WEST_3)
+            .region(Region.of(config.region))
             .credentialsProvider(credentials)
             .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
             .build()
