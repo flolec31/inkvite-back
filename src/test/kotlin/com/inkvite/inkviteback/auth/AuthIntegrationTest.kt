@@ -578,7 +578,7 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
 
     @Test
     fun `protected endpoint without token returns 401 with error message`() {
-        mockMvc.perform(get("/actuator/health"))
+        mockMvc.perform(get("/artists/me"))
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.error").value("Unauthorized"))
     }
@@ -586,7 +586,7 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
     @Test
     fun `protected endpoint with invalid token returns 401 with error message`() {
         mockMvc.perform(
-            get("/actuator/health")
+            get("/artists/me")
                 .header("Authorization", "Bearer this.is.invalid")
         )
             .andExpect(status().isUnauthorized)
@@ -595,9 +595,23 @@ class AuthIntegrationTest : AbstractIntegrationTest() {
 
     @Test
     fun `protected endpoint with valid access token returns 200`() {
-        val token = jwtService.generateAccessToken(UUID.randomUUID(), Role.ARTIST)
+        val artistId = UUID.randomUUID()
+        artistRepository.save(
+            TattooArtist(
+                id = artistId,
+                email = "artist@test.com",
+                password = passwordEncoder.encode("password123")!!,
+                artistName = "Test Artist",
+                slug = "test-artist",
+                city = "Test City",
+                countryCode = "FR",
+                registeredAt = Instant.now(),
+                activatedAt = Instant.now(),
+            )
+        )
+        val token = jwtService.generateAccessToken(artistId, Role.ARTIST)
         mockMvc.perform(
-            get("/actuator/health")
+            get("/artists/me")
                 .header("Authorization", "Bearer $token")
         )
             .andExpect(status().isOk)
