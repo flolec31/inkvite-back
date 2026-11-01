@@ -109,6 +109,7 @@ Swagger UI is disabled in production (`springdoc.swagger-ui.enabled: false`). En
 | `APP_STORAGE_BUCKET`             | Bucket name                                                                     |
 | `APP_STORAGE_ACCESS_KEY`         | Storage access key                                                              |
 | `APP_STORAGE_SECRET_KEY`         | Storage secret key                                                              |
+| `APP_STORAGE_REGION`             | SigV4 signing region (default `auto`; R2 uses `auto`, AWS a real region)        |
 
 ## Deployment
 

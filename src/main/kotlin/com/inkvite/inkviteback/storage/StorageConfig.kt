@@ -8,4 +8,5 @@ data class StorageConfig(
     val bucket: String = "",
     val accessKey: String = "",
     val secretKey: String = "",
+    val region: String = "",
 )

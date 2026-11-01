@@ -20,6 +20,7 @@ class TestcontainersConfiguration {
 
     companion object {
         private const val BUCKET = "inkvite"
+        private const val REGION = "auto"
         private const val S3_PORT = 9090
         private const val ACCESS_KEY = "test"
         private const val SECRET_KEY = "test"
@@ -55,6 +56,7 @@ class TestcontainersConfiguration {
             registry.add("app.storage.access-key") { s3AccessKey }
             registry.add("app.storage.secret-key") { s3SecretKey }
             registry.add("app.storage.bucket") { BUCKET }
+            registry.add("app.storage.region") { REGION }
         }
     }
 

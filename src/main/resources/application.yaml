@@ -27,6 +27,7 @@ app:
     bucket: ${APP_STORAGE_BUCKET:}
     access-key: ${APP_STORAGE_ACCESS_KEY:}
     secret-key: ${APP_STORAGE_SECRET_KEY:}
+    region: ${APP_STORAGE_REGION:auto}
 
 springdoc:
   api-docs:
