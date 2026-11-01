@@ -1,0 +1,103 @@
+name: Deploy to VPS
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to deploy (use sha-<sha> to pin a specific build / roll back)"
+        default: main
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read  # The VPS logs in to GHCR with this job's short-lived token
+
+    steps:
+      - name: Validate tag input
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          if ! printf '%s' "$TAG" | grep -Eq '^[A-Za-z0-9._-]+$'; then
+            echo "Invalid tag: '$TAG'" >&2
+            exit 1
+          fi
+
+      - name: Set up SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Log in to GHCR on the VPS
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+          VPS_USER: ${{ vars.VPS_USER }}
+          VPS_HOST: ${{ vars.VPS_HOST }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh \
+            -i ~/.ssh/deploy_key \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" \
+            "docker login ghcr.io -u '$GHCR_USER' --password-stdin"
+
+      - name: Deploy and wait for health
+        env:
+          TAG: ${{ inputs.tag }}
+          VPS_USER: ${{ vars.VPS_USER }}
+          VPS_HOST: ${{ vars.VPS_HOST }}
+        run: |
+          ssh \
+            -i ~/.ssh/deploy_key \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" \
+            "TAG='$TAG' bash -s" <<'EOF'
+          set -euo pipefail
+          cd ~/app
+
+          # Persist the deployed tag so `docker compose up -d` is reproducible on the box.
+          if grep -q '^IMAGE_TAG=' .env; then
+            sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=${TAG}|" .env
+          else
+            echo "IMAGE_TAG=${TAG}" >> .env
+          fi
+
+          docker compose pull inkvite-back
+          docker compose up -d
+
+          cid="$(docker compose ps -q inkvite-back)"
+          echo "Waiting for inkvite-back to become healthy..."
+          status=starting
+          for i in $(seq 1 30); do
+            status="$(docker inspect -f '{{.State.Health.Status}}' "$cid" 2>/dev/null || echo starting)"
+            echo "  [$i] $status"
+            [ "$status" = healthy ] && break
+            if [ "$status" = unhealthy ]; then
+              echo "Container reported unhealthy." >&2
+              docker compose logs --tail=80 inkvite-back >&2
+              docker logout ghcr.io || true
+              exit 1
+            fi
+            sleep 5
+          done
+
+          if [ "$status" != healthy ]; then
+            echo "Timed out waiting for health." >&2
+            docker compose logs --tail=80 inkvite-back >&2
+            docker logout ghcr.io || true
+            exit 1
+          fi
+
+          docker image prune -f
+          docker logout ghcr.io
+          echo "Deployed ${TAG} successfully."
+          EOF
