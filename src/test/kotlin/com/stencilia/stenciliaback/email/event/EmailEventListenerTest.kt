@@ -1,0 +1,116 @@
+package com.stencilia.stenciliaback.email.event
+
+import com.stencilia.stenciliaback.appointment.entity.Appointment
+import com.stencilia.stenciliaback.appointment.entity.TattooStyle
+import com.stencilia.stenciliaback.appointment.event.AppointmentRequestConfirmationEmailRequested
+import com.stencilia.stenciliaback.appointment.event.AppointmentLinksRequested
+import com.stencilia.stenciliaback.appointment.event.AppointmentNotificationEmailRequested
+import com.stencilia.stenciliaback.appointment.event.AppointmentVerificationEmailRequested
+import com.stencilia.stenciliaback.artist.entity.TattooArtist
+import com.stencilia.stenciliaback.auth.artist.event.ArtistVerificationEmailRequested
+import com.stencilia.stenciliaback.auth.artist.event.PasswordResetEmailRequested
+import com.stencilia.stenciliaback.client.entity.TattooClient
+import com.stencilia.stenciliaback.email.service.EmailService
+import java.time.Instant
+import java.util.UUID
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.InjectMocks
+import org.mockito.Mock
+import org.mockito.Mockito.verify
+import org.mockito.junit.jupiter.MockitoExtension
+
+@ExtendWith(MockitoExtension::class)
+class EmailEventListenerTest {
+
+    @Mock
+    private lateinit var emailService: EmailService
+
+    @InjectMocks
+    private lateinit var listener: EmailEventListener
+
+    @Test
+    fun `on ArtistVerificationEmailRequested delegates to email service`() {
+        val event =
+            ArtistVerificationEmailRequested(to = "user@example.com", artistName = "Test Artist", token = "abc123")
+
+        listener.on(event)
+
+        verify(emailService).sendArtistVerificationEmail("user@example.com", "Test Artist", "abc123")
+    }
+
+    @Test
+    fun `on PasswordResetEmailRequested delegates to email service`() {
+        val event = PasswordResetEmailRequested(to = "user@example.com", artistName = "Test Artist", token = "reset-token-123")
+
+        listener.on(event)
+
+        verify(emailService).sendPasswordResetEmail("user@example.com", "Test Artist", "reset-token-123")
+    }
+
+    @Test
+    fun `on AppointmentVerificationEmailRequested delegates to email service`() {
+        val appointment = buildAppointment()
+        val event = AppointmentVerificationEmailRequested(appointment)
+
+        listener.on(event)
+
+        verify(emailService).sendAppointmentVerificationEmail(appointment)
+    }
+
+    @Test
+    fun `on AppointmentNotificationEmailRequested delegates to email service`() {
+        val appointment = buildAppointment()
+        val event = AppointmentNotificationEmailRequested(appointment)
+
+        listener.on(event)
+
+        verify(emailService).sendAppointmentNotificationEmail(appointment)
+    }
+
+    @Test
+    fun `on AppointmentLinksRequested delegates to email service`() {
+        val appointments = listOf(buildAppointment())
+        val event = AppointmentLinksRequested(appointments)
+
+        listener.on(event)
+
+        verify(emailService).sendAppointmentLinksEmail(appointments)
+    }
+
+    @Test
+    fun `on AppointmentRequestConfirmationEmailRequested delegates to email service`() {
+        val appointment = buildAppointment()
+        val event = AppointmentRequestConfirmationEmailRequested(appointment)
+
+        listener.on(event)
+
+        verify(emailService).sendAppointmentRequestConfirmationEmail(appointment)
+    }
+
+    private fun buildAppointment(): Appointment {
+        val artist = TattooArtist(
+            id = UUID.randomUUID(),
+            email = "artist@test.com",
+            password = "hashed",
+            artistName = "Test Artist",
+            slug = "test-artist",
+            city = "Test City",
+            countryCode = "FR",
+            registeredAt = Instant.now(),
+            activatedAt = Instant.now()
+        )
+        val client = TattooClient(email = "client@test.com", firstName = "Jane", lastName = "Doe")
+        return Appointment(
+            artist = artist,
+            client = client,
+            tattooDescription = "A beautiful dragon tattoo",
+            tattooPlacement = "forearm",
+            tattooSize = "10x10cm",
+            firstTattoo = false,
+            coverUp = false,
+            color = false,
+            style = TattooStyle.REALISM
+        )
+    }
+}

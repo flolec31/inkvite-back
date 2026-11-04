@@ -1,0 +1,27 @@
+package com.stencilia.stenciliaback.artist.service
+
+import com.stencilia.stenciliaback.artist.dto.ProfileResponseDto
+import com.stencilia.stenciliaback.artist.dto.UpdateProfileRequestDto
+import com.stencilia.stenciliaback.artist.entity.TattooArtist
+import com.stencilia.stenciliaback.artist.model.RegisterRequestModel
+import org.springframework.web.multipart.MultipartFile
+import java.util.*
+
+interface TattooArtistService {
+    fun register(request: RegisterRequestModel): UUID
+    fun activate(artistId: UUID)
+    fun findUnactivatedByEmail(email: String): TattooArtist?
+    fun findUnactivatedBySlug(slug: String): TattooArtist?
+    fun findByEmail(email: String): TattooArtist?
+    fun findBySlug(slug: String): TattooArtist
+    fun isSlugTaken(slug: String): Boolean
+    fun existsBySlugAndIdNot(slug: String, artistId: UUID): Boolean
+    fun findById(artistId: UUID): TattooArtist
+    fun updateProfile(artistId: UUID, request: UpdateProfileRequestDto): ProfileResponseDto
+    fun updatePhoto(artistId: UUID, photo: MultipartFile): String
+    fun deletePhoto(artistId: UUID)
+    fun getProfile(artistId: UUID): ProfileResponseDto
+    fun getProfileBySlug(slug: String): ProfileResponseDto
+    fun updatePassword(artistId: UUID, encodedPassword: String)
+    fun delete(artistId: UUID)
+}

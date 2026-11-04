@@ -1,0 +1,27 @@
+package com.stencilia.stenciliaback.common
+
+import com.stencilia.stenciliaback.email.exception.EmailDeliveryException
+import jakarta.validation.ConstraintViolationException
+import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.multipart.MaxUploadSizeExceededException
+
+@RestControllerAdvice
+class GlobalControllerAdvice : AbstractControllerAdvice() {
+
+    @ExceptionHandler(ConstraintViolationException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleConstraintViolation(e: ConstraintViolationException) =
+        mapOf("error" to e.message)
+
+    @ExceptionHandler(MaxUploadSizeExceededException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleMaxUploadSizeExceeded() =
+        mapOf("error" to "File is too large")
+
+    @ExceptionHandler(EmailDeliveryException::class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    fun handleEmailDelivery(e: EmailDeliveryException) = handleException(e, is5xx = true)
+}

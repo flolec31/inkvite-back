@@ -1,0 +1,45 @@
+package com.stencilia.stenciliaback.appointment.dto
+
+import com.stencilia.stenciliaback.appointment.entity.Appointment
+import com.stencilia.stenciliaback.appointment.entity.TattooStyle
+import java.time.LocalDate
+import java.time.ZoneId
+import java.util.*
+
+data class AppointmentDetailsResponseDto(
+    val id: UUID,
+    val tattooDescription: String,
+    val tattooPlacement: String,
+    val tattooSize: String,
+    val firstTattoo: Boolean,
+    val coverUp: Boolean,
+    val color: Boolean,
+    val style: TattooStyle,
+    val receivedAt: LocalDate,
+    val references: List<ReferenceDetailsResponseDto>,
+    val clientName: String,
+    val new: Boolean,
+    val archived: Boolean,
+    val unreadMessages: Boolean
+) {
+    constructor(
+        appointment: Appointment,
+        references: List<ReferenceDetailsResponseDto>,
+        unreadMessages: Boolean
+    ) : this(
+        id = appointment.id,
+        tattooDescription = appointment.tattooDescription,
+        tattooPlacement = appointment.tattooPlacement,
+        tattooSize = appointment.tattooSize,
+        firstTattoo = appointment.firstTattoo,
+        coverUp = appointment.coverUp,
+        color = appointment.color,
+        style = appointment.style,
+        receivedAt = LocalDate.ofInstant(appointment.verifiedAt, ZoneId.of("UTC")),
+        references = references,
+        clientName = appointment.client.getFullName(),
+        new = appointment.new,
+        archived = appointment.archived,
+        unreadMessages = unreadMessages
+    )
+}

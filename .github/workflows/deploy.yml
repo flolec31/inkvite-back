@@ -71,11 +71,11 @@ jobs:
             echo "IMAGE_TAG=${TAG}" >> .env
           fi
 
-          docker compose pull inkvite-back
+          docker compose pull stencilia-back
           docker compose up -d
 
-          cid="$(docker compose ps -q inkvite-back)"
-          echo "Waiting for inkvite-back to become healthy..."
+          cid="$(docker compose ps -q stencilia-back)"
+          echo "Waiting for stencilia-back to become healthy..."
           status=starting
           for i in $(seq 1 30); do
             status="$(docker inspect -f '{{.State.Health.Status}}' "$cid" 2>/dev/null || echo starting)"
@@ -83,7 +83,7 @@ jobs:
             [ "$status" = healthy ] && break
             if [ "$status" = unhealthy ]; then
               echo "Container reported unhealthy." >&2
-              docker compose logs --tail=80 inkvite-back >&2
+              docker compose logs --tail=80 stencilia-back >&2
               docker logout ghcr.io || true
               exit 1
             fi
@@ -92,7 +92,7 @@ jobs:
 
           if [ "$status" != healthy ]; then
             echo "Timed out waiting for health." >&2
-            docker compose logs --tail=80 inkvite-back >&2
+            docker compose logs --tail=80 stencilia-back >&2
             docker logout ghcr.io || true
             exit 1
           fi

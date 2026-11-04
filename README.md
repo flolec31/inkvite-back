@@ -1,9 +1,9 @@
-# inkvite-back
+# stencilia-back
 
-[![CI](https://github.com/flolec31/inkvite-back/actions/workflows/ci.yml/badge.svg)](https://github.com/flolec31/inkvite-back/actions/workflows/ci.yml)
-[![Build & publish image](https://github.com/flolec31/inkvite-back/actions/workflows/publish.yml/badge.svg)](https://github.com/flolec31/inkvite-back/actions/workflows/publish.yml)
+[![CI](https://github.com/flolec31/stencilia-back/actions/workflows/ci.yml/badge.svg)](https://github.com/flolec31/stencilia-back/actions/workflows/ci.yml)
+[![Build & publish image](https://github.com/flolec31/stencilia-back/actions/workflows/publish.yml/badge.svg)](https://github.com/flolec31/stencilia-back/actions/workflows/publish.yml)
 
-Backend API for **Inkvite** — a tattoo appointment booking platform. Artists register and manage their profile; clients submit appointment requests through the artist's public booking page.
+Backend API for **Stencilia** — a tattoo appointment booking platform. Artists register and manage their profile; clients submit appointment requests through the artist's public booking page.
 
 ## Tech stack
 
@@ -38,7 +38,7 @@ app:
     secret: <base64-encoded 256-bit secret>
   storage:
     endpoint: http://localhost:9000
-    bucket: inkvite
+    bucket: stencilia
     access-key: minioadmin
     secret-key: minioadmin
 ```
@@ -102,7 +102,7 @@ Swagger UI is disabled in production (`springdoc.swagger-ui.enabled: false`). En
 | `APP_JWT_SECRET`                 | Base64-encoded HMAC-SHA256 secret (min 256 bits)                                |
 | `APP_BASE_URL`                   | Frontend base URL used to build email links (`/appointment/{id}`, `/dashboard`) |
 | `APP_CORS_ALLOWED_ORIGINS`       | Comma-separated list of allowed CORS origins                                    |
-| `APP_EMAIL_FROM`                 | Sender address (default: `noreply@inkvite.me`)                                  |
+| `APP_EMAIL_FROM`                 | Sender address (default: `noreply@stencilia.me`)                                  |
 | `APP_SUPPORT_NOTIFICATION_EMAIL` | Recipient for new support/contact message notifications                         |
 | `RESEND_API_KEY`                 | Resend API key                                                                  |
 | `APP_STORAGE_ENDPOINT`           | S3-compatible endpoint URL                                                      |
@@ -114,7 +114,7 @@ Swagger UI is disabled in production (`springdoc.swagger-ui.enabled: false`). En
 ## Deployment
 
 The app is containerised (`Dockerfile`) and deployed to a VPS as two containers
-(`inkvite-back` + a tunnel-based reverse proxy). The **Build & publish image** workflow (`publish.yml`)
+(`stencilia-back` + a tunnel-based reverse proxy). The **Build & publish image** workflow (`publish.yml`)
 builds and pushes the image to GHCR on every push to `main`; releasing to the VPS is the separate
 **Deploy to VPS** workflow (`deploy.yml`), a **manual** `workflow_dispatch` run (choose `main`
 for the latest build, or `sha-<sha>` to pin/roll back). The deploy SSHes into the box, updates
@@ -126,7 +126,7 @@ mirrored here; the deploy job runs `docker compose pull/up` against whatever's o
 
 **One-time setup** — in the repo (Settings → Secrets and variables → Actions): secrets `VPS_SSH_KEY`
 (deploy private key) and `VPS_KNOWN_HOSTS` (`ssh-keyscan <host>`); variables `VPS_HOST`, `VPS_USER`.
-On the VPS, `~/app/docker-compose.yml` must point the image at `ghcr.io/flolec31/inkvite-back:${IMAGE_TAG:-main}`,
+On the VPS, `~/app/docker-compose.yml` must point the image at `ghcr.io/flolec31/stencilia-back:${IMAGE_TAG:-main}`,
 carry a `wget`-based `/actuator/health` healthcheck, and have the reverse-proxy sidecar depend on it
 with `condition: service_healthy`; `~/app/.env` (chmod 600) holds `IMAGE_TAG`, the tunnel token, and the
 runtime vars above (note: DB uses `SPRING_DATASOURCE_*`, not `DB_*`).
