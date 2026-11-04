@@ -1,0 +1,38 @@
+package com.stencilia.stenciliaback.storage.service.implementation
+
+import com.stencilia.stenciliaback.storage.dto.ImageUploadResponseDto
+import com.stencilia.stenciliaback.storage.exception.ImageUploadFailedException
+import com.stencilia.stenciliaback.storage.ImageValidator
+import com.stencilia.stenciliaback.storage.service.ImageUploadService
+import com.stencilia.stenciliaback.storage.service.StorageService
+import org.springframework.stereotype.Service
+import org.springframework.web.multipart.MultipartFile
+import java.util.UUID
+
+@Service
+class ImageUploadServiceImpl(
+    private val storageService: StorageService,
+    private val imageValidator: ImageValidator,
+) : ImageUploadService {
+
+    override fun uploadReference(artistId: UUID, photo: MultipartFile): ImageUploadResponseDto =
+        upload("references", artistId, photo)
+
+    override fun uploadSupportScreenshot(artistId: UUID, photo: MultipartFile): ImageUploadResponseDto =
+        upload("contact-screenshots", artistId, photo)
+
+    override fun uploadMessageImage(artistId: UUID, photo: MultipartFile): ImageUploadResponseDto =
+        upload("messages", artistId, photo)
+
+    private fun upload(prefix: String, artistId: UUID, photo: MultipartFile): ImageUploadResponseDto {
+        imageValidator.validate(photo)
+
+        val key = "$prefix/$artistId/${UUID.randomUUID()}"
+        val url = try {
+            storageService.upload(key, photo.bytes, photo.contentType!!)
+        } catch (e: Exception) {
+            throw ImageUploadFailedException(e)
+        }
+        return ImageUploadResponseDto(key = key, url = url)
+    }
+}

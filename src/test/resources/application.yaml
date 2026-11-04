@@ -1,6 +1,6 @@
 spring:
   application:
-    name: inkvite-back
+    name: stencilia-back
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
@@ -13,9 +13,9 @@ app:
     secret: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
     access-token-expiry: 900
   email:
-    from: noreply@inkvite.me
+    from: noreply@stencilia.me
   support:
-    notification-email: support@inkvite.me
+    notification-email: support@stencilia.me
 
 springdoc:
   api-docs:

@@ -1,0 +1,19 @@
+package com.stencilia.stenciliaback.artist.repository
+
+import com.stencilia.stenciliaback.artist.entity.TattooArtist
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
+import java.util.Optional
+import java.util.UUID
+
+@Repository
+interface TattooArtistRepository : JpaRepository<TattooArtist, UUID> {
+    fun existsByEmail(email: String): Boolean
+    fun findByEmail(email: String): TattooArtist?
+    fun findByEmailAndActivatedAtIsNull(email: String): TattooArtist?
+    fun findBySlug(slug: String): Optional<TattooArtist>
+    fun findBySlugAndActivatedAtIsNotNull(slug: String): Optional<TattooArtist>
+    fun findBySlugAndActivatedAtIsNull(slug: String): TattooArtist?
+    fun existsBySlugAndActivatedAtIsNotNull(slug: String): Boolean
+    fun existsBySlugAndIdNotAndActivatedAtIsNotNull(slug: String, id: UUID): Boolean
+}

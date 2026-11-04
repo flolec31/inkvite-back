@@ -1,0 +1,32 @@
+package com.stencilia.stenciliaback.appointment.controller
+
+import com.stencilia.stenciliaback.appointment.exception.*
+import com.stencilia.stenciliaback.common.AbstractControllerAdvice
+import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RestControllerAdvice
+
+@RestControllerAdvice
+class AppointmentControllerAdvice : AbstractControllerAdvice() {
+
+    @ExceptionHandler(AppointmentNotFoundException::class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    fun handleAppointmentNotFound(e: AppointmentNotFoundException) = handleException(e)
+
+    @ExceptionHandler(AppointmentBelongsToAnotherArtistException::class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    fun handleAppointmentBelongsToAnotherArtist(e: AppointmentBelongsToAnotherArtistException) = handleException(e)
+
+    @ExceptionHandler(AppointmentArchiveStateException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handleAppointmentArchiveState(e: AppointmentArchiveStateException) = handleException(e)
+
+    @ExceptionHandler(AppointmentAlreadyNewException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handleAppointmentAlreadyNew(e: AppointmentAlreadyNewException) = handleException(e)
+
+    @ExceptionHandler(CannotMarkArchivedAppointmentAsNewException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handleCannotMarkArchivedAppointmentAsNew(e: CannotMarkArchivedAppointmentAsNewException) = handleException(e)
+}

@@ -1,0 +1,23 @@
+package com.stencilia.stenciliaback.artist.entity
+
+import jakarta.persistence.Entity
+import jakarta.persistence.Id
+import jakarta.persistence.Table
+import java.time.Instant
+import java.util.UUID
+
+@Entity
+@Table(name = "tattoo_artist")
+class TattooArtist(
+    @Id var id: UUID,
+    var email: String,
+    var password: String,
+    var artistName: String,
+    var slug: String,
+    var city: String,
+    var countryCode: String,
+    var registeredAt: Instant,
+    var activatedAt: Instant? = null,
+    var profilePhotoKey: String? = null,
+    var agendaOpen: Boolean = true,
+)

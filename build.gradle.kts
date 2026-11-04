@@ -8,9 +8,9 @@ plugins {
     jacoco
 }
 
-group = "com.inkvite"
+group = "com.stencilia"
 version = "0.0.1-SNAPSHOT"
-description = "inkvite-back"
+description = "stencilia-back"
 
 java {
     toolchain {
@@ -70,7 +70,7 @@ allOpen {
 
 sonar {
     properties {
-        property("sonar.projectKey", "flolec31_inkvite-back")
+        property("sonar.projectKey", "flolec31_stencilia-back")
         property("sonar.organization", "florianleca")
         property("sonar.host.url", "https://sonarcloud.io")
         property("sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml")
